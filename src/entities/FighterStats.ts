@@ -16,53 +16,46 @@ export interface FighterStats {
   bodyH: number;
 }
 
-// Sizes calibrated so on-screen height roughly matches sprite scale:
-//   Knight ~70px tall  →  bodyH 64
-//   Huntress ~58px tall →  bodyH 52
-//   Wetlands ~88px tall →  bodyH 80
-// Weight follows archetype, not visual size: heavier weight = takes less KB.
-
-export const KNIGHT_STATS: FighterStats = {
-  weight: 105,
-  walkSpeed: 2.0,
-  runSpeed: 4.4,
-  groundFriction: 0.78,
-  airAccel: 0.22,
-  airMaxSpeed: 3.6,
+/**
+ * Sand Lancer — Marth/Marcina-class. Medium weight, long disjoint reach,
+ * tipper sweetspot game. Stats are placeholder (~Marth ratios) and will
+ * be tuned 1:1 against kuroganehammer.com Smash 4 + SmashWiki Melee in
+ * Phase 3 alongside the moveset frame data.
+ *
+ * jumpSquat 5f matches Marth (Brawl/Smash 4); shortHop differential
+ * matches Marth's full/short ratio.
+ */
+export const LANCER_STATS: FighterStats = {
+  weight: 90,
+  walkSpeed: 1.85,
+  runSpeed: 5.0,
+  groundFriction: 0.79,
+  airAccel: 0.21,
+  airMaxSpeed: 3.7,
   airFriction: 0.96,
-  fullHopVy: -13.0,
-  shortHopVy: -8.5,
-  doubleJumpVy: -11.5,
+  fullHopVy: -13.2,
+  shortHopVy: -8.6,
+  doubleJumpVy: -11.6,
   fastFallVy: 14.0,
   maxFallSpeed: 9.5,
-  jumpSquatFrames: 4,
-  bodyW: 36,
-  bodyH: 64
+  jumpSquatFrames: 5,
+  bodyW: 32,
+  bodyH: 60
 };
 
-export const WETLANDS_STATS: FighterStats = {
-  weight: 150,
-  walkSpeed: 1.7,
-  runSpeed: 3.4,
-  groundFriction: 0.72,
-  airAccel: 0.16,
-  airMaxSpeed: 3.0,
-  airFriction: 0.95,
-  fullHopVy: -11.5,
-  shortHopVy: -7.6,
-  doubleJumpVy: -10.0,
-  fastFallVy: 13.0,
-  maxFallSpeed: 9.5,
-  jumpSquatFrames: 6,
-  bodyW: 56,
-  bodyH: 80
-};
-
-export const SKIRMISHER_STATS: FighterStats = {
-  weight: 78,
+/**
+ * Hooded Skirmisher — Sheik-class. Featherweight, fastest jab in the cast,
+ * combo-heavy with lightning movement. Stats placeholder (~Sheik ratios)
+ * tuned 1:1 in Phase 3 against kuroganehammer.com Sheik frame data.
+ *
+ * jumpSquat 3f matches Sheik (Smash 4); fastFall/maxFall mirror her
+ * vertical control profile.
+ */
+export const HUNTRESS_STATS: FighterStats = {
+  weight: 80,
   walkSpeed: 2.4,
   runSpeed: 5.6,
-  groundFriction: 0.82,
+  groundFriction: 0.83,
   airAccel: 0.26,
   airMaxSpeed: 4.4,
   airFriction: 0.97,
@@ -73,5 +66,5 @@ export const SKIRMISHER_STATS: FighterStats = {
   maxFallSpeed: 10.5,
   jumpSquatFrames: 3,
   bodyW: 28,
-  bodyH: 52
+  bodyH: 54
 };

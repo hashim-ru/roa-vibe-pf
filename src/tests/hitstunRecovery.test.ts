@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Fighter } from '../entities/Fighter';
-import { KNIGHT_STATS, SKIRMISHER_STATS } from '../entities/FighterStats';
-import { KNIGHT_MOVES } from '../entities/characters/knight/Knight';
-import { SKIRMISHER_MOVES } from '../entities/characters/skirmisher/Skirmisher';
+import { LANCER_STATS, HUNTRESS_STATS } from '../entities/FighterStats';
+import { LANCER_MOVES } from '../entities/characters/lancer/Lancer';
+import { HUNTRESS_MOVES } from '../entities/characters/skirmisher/Skirmisher';
 import { World } from '../physics/World';
 import { InputBuffer } from '../input/InputBuffer';
 import { emptyInput } from '../input/InputState';
@@ -37,7 +37,7 @@ function buildWorld(): World {
   );
 }
 
-function makeFighter(idx: number, stats: typeof KNIGHT_STATS, moves: typeof KNIGHT_MOVES, world: World): Fighter {
+function makeFighter(idx: number, stats: typeof LANCER_STATS, moves: typeof LANCER_MOVES, world: World): Fighter {
   const buf = new InputBuffer();
   buf.push(emptyInput());
   const f = new Fighter(idx, world, stats, buf, world.spawns[idx], moves);
@@ -61,8 +61,8 @@ describe('hitstun recovery (regression: P2 used to be permanently stuck)', () =>
 
   beforeEach(() => {
     world = buildWorld();
-    p1 = makeFighter(0, KNIGHT_STATS, KNIGHT_MOVES, world);
-    p2 = makeFighter(1, SKIRMISHER_STATS, SKIRMISHER_MOVES, world);
+    p1 = makeFighter(0, LANCER_STATS, LANCER_MOVES, world);
+    p2 = makeFighter(1, HUNTRESS_STATS, HUNTRESS_MOVES, world);
     // Position P1 at hitting range of P2 facing right
     p1.body.x = 700;
     p2.body.x = 740;
@@ -71,7 +71,7 @@ describe('hitstun recovery (regression: P2 used to be permanently stuck)', () =>
   });
 
   it('victim exits hitstun within 30 ticks of a basic jab', () => {
-    p1.startMove(KNIGHT_MOVES['jab'], 0);
+    p1.startMove(LANCER_MOVES['jab'], 0);
     p1.fsm.force('Attack', 0);
 
     let tick = 0;
@@ -92,7 +92,7 @@ describe('hitstun recovery (regression: P2 used to be permanently stuck)', () =>
   });
 
   it('pendingHitstunEnter is consumed exactly once per hit', () => {
-    p1.startMove(KNIGHT_MOVES['jab'], 0);
+    p1.startMove(LANCER_MOVES['jab'], 0);
     p1.fsm.force('Attack', 0);
     let consumeCount = 0;
     let lastWasTrue = false;
@@ -112,18 +112,10 @@ describe('hitstun recovery (regression: P2 used to be permanently stuck)', () =>
   });
 });
 
-describe('Skirmisher rescaling preserves multi-frame active windows', () => {
-  it('fsmash has multiple distinct hitbox frames after rescale', () => {
-    const fs = SKIRMISHER_MOVES['fsmash'];
-    const hbFrames = fs.frames.filter((f) => f.hitboxes.length > 0).map((f) => f.frame);
-    expect(new Set(hbFrames).size).toBe(hbFrames.length);
-    expect(hbFrames.length).toBeGreaterThanOrEqual(2);
-  });
-
-  it('ftilt has multiple distinct hitbox frames after rescale', () => {
-    const ft = SKIRMISHER_MOVES['ftilt'];
-    const hbFrames = ft.frames.filter((f) => f.hitboxes.length > 0).map((f) => f.frame);
-    expect(new Set(hbFrames).size).toBe(hbFrames.length);
-    expect(hbFrames.length).toBeGreaterThanOrEqual(3);
-  });
-});
+// NOTE: the previous "Skirmisher rescaling preserves multi-frame active
+// windows" suite was removed during the v0 → tech-demo-rebuild content
+// wipe. It tested an obsolete code path where SKIRMISHER_MOVES were
+// programmatically rescaled from KNIGHT_MOVES; both characters now have
+// bespoke movesets, so the rescale path no longer exists. Phase 3 will
+// add new lancer/skirmisher frame-data tests that assert reference 1:1
+// values against kuroganehammer.com (e.g., "lancer fsmash startup is 14f").

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Fighter } from '../entities/Fighter';
-import { KNIGHT_STATS } from '../entities/FighterStats';
-import { KNIGHT_MOVES } from '../entities/characters/knight/Knight';
+import { LANCER_STATS } from '../entities/FighterStats';
+import { LANCER_MOVES } from '../entities/characters/lancer/Lancer';
 import { World } from '../physics/World';
 import { InputBuffer } from '../input/InputBuffer';
 import { emptyInput, InputState } from '../input/InputState';
@@ -38,7 +38,7 @@ function buildWorld(): World {
 function makeFighter(world: World): Fighter {
   const buf = new InputBuffer();
   buf.push(emptyInput());
-  const f = new Fighter(0, world, KNIGHT_STATS, buf, world.spawns[0], KNIGHT_MOVES);
+  const f = new Fighter(0, world, LANCER_STATS, buf, world.spawns[0], LANCER_MOVES);
   const fsm = new StateMachine<Fighter>(f);
   fsm.registerMany([
     new IdleState(), new WalkState(), new CrouchState(), new JumpSquatState(),

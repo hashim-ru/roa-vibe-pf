@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Fighter } from '../entities/Fighter';
-import { KNIGHT_STATS, SKIRMISHER_STATS } from '../entities/FighterStats';
-import { KNIGHT_MOVES } from '../entities/characters/knight/Knight';
-import { SKIRMISHER_MOVES } from '../entities/characters/skirmisher/Skirmisher';
+import { LANCER_STATS, HUNTRESS_STATS } from '../entities/FighterStats';
+import { LANCER_MOVES } from '../entities/characters/lancer/Lancer';
+import { HUNTRESS_MOVES } from '../entities/characters/skirmisher/Skirmisher';
 import { World } from '../physics/World';
 import { InputBuffer } from '../input/InputBuffer';
 import { emptyInput } from '../input/InputState';
@@ -37,7 +37,7 @@ function buildWorld(): World {
   );
 }
 
-function makeFighter(idx: number, stats: typeof KNIGHT_STATS, moves: typeof KNIGHT_MOVES, world: World, buf: InputBuffer): Fighter {
+function makeFighter(idx: number, stats: typeof LANCER_STATS, moves: typeof LANCER_MOVES, world: World, buf: InputBuffer): Fighter {
   const f = new Fighter(idx, world, stats, buf, world.spawns[idx], moves);
   const fsm = new StateMachine<Fighter>(f);
   fsm.registerMany([
@@ -64,8 +64,8 @@ describe('Bot AI', () => {
     buf1.push(emptyInput());
     buf2 = new InputBuffer();
     buf2.push(emptyInput());
-    p1 = makeFighter(0, KNIGHT_STATS, KNIGHT_MOVES, world, buf1);
-    p2 = makeFighter(1, SKIRMISHER_STATS, SKIRMISHER_MOVES, world, buf2);
+    p1 = makeFighter(0, LANCER_STATS, LANCER_MOVES, world, buf1);
+    p2 = makeFighter(1, HUNTRESS_STATS, HUNTRESS_MOVES, world, buf2);
   });
 
   it('hard bot eventually approaches the player when far apart', () => {
@@ -87,7 +87,7 @@ describe('Bot AI', () => {
   it('hard bot attacks more aggressively than easy bot at close range', () => {
     const easyBuf = new InputBuffer();
     easyBuf.push(emptyInput());
-    const easyP2 = makeFighter(1, SKIRMISHER_STATS, SKIRMISHER_MOVES, world, easyBuf);
+    const easyP2 = makeFighter(1, HUNTRESS_STATS, HUNTRESS_MOVES, world, easyBuf);
     p1.body.x = 600;
     easyP2.body.x = 660; // within both bots' attack ranges
     const easyBot = new BotController(easyP2, p1, easyBuf, 'easy');

@@ -1,0 +1,44 @@
+{
+  "jab": {
+    "id": "jab",
+    "category": "ground",
+    "totalFrames": 14,
+    "iasaFrame": 11,
+    "lCancelable": false,
+    "landingLag": 0,
+    "autoCancelBefore": null,
+    "autoCancelAfter": null,
+    "frames": [
+      {
+        "frame": 4,
+        "hitboxes": [
+          { "id": 0, "ox": 36, "oy": -28, "w": 44, "h": 28, "damage": 3, "baseKB": 18, "kbGrowth": 25, "angle": 80, "hitstunMul": 0.4, "priority": 1, "hitId": "lancer_jab", "sfxKey": "hit_light" }
+        ]
+      },
+      {
+        "frame": 5,
+        "hitboxes": [
+          { "id": 0, "ox": 38, "oy": -26, "w": 44, "h": 28, "damage": 3, "baseKB": 18, "kbGrowth": 25, "angle": 80, "hitstunMul": 0.4, "priority": 1, "hitId": "lancer_jab", "sfxKey": "hit_light" }
+        ]
+      }
+    ]
+  },
+  "nair": {
+    "id": "nair",
+    "category": "aerial",
+    "totalFrames": 26,
+    "iasaFrame": 22,
+    "lCancelable": true,
+    "landingLag": 10,
+    "autoCancelBefore": 4,
+    "autoCancelAfter": 22,
+    "frames": [
+      {
+        "frame": 6,
+        "hitboxes": [
+          { "id": 0, "ox": 0, "oy": -32, "w": 80, "h": 70, "damage": 8, "baseKB": 16, "kbGrowth": 70, "angle": 361, "hitstunMul": 0.4, "priority": 2, "hitId": "lancer_nair", "sfxKey": "hit_med" }
+        ]
+      }
+    ]
+  }
+}
