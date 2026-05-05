@@ -129,9 +129,9 @@ export class MatchScene extends Phaser.Scene {
 
     const charIds: CharacterId[] = [cfg.characters[0], cfg.characters[1]];
     this.fighterRenderer = new FighterRenderer(this, this.fighters, charIds);
-    this.fighterRenderer.setSignatureCallback((moveId, x, y, facing, idx) => {
+    this.fighterRenderer.setSignatureCallback((moveId, x, y, facing, idx, charId) => {
       const accent = idx === 0 ? 0xffd860 : 0x6cb8ff;
-      this.vfx.signatureVFX(moveId, x, y, facing, accent);
+      this.vfx.signatureVFX(moveId, x, y, facing, accent, charId);
     });
     this.debugRenderer = new HitboxDebugRenderer(this);
     this.camera = new DynamicCamera(this);

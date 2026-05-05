@@ -65,7 +65,8 @@ export type SignatureCallback = (
   worldX: number,
   worldY: number,
   facing: 1 | -1,
-  playerIndex: number
+  playerIndex: number,
+  charId: CharacterId
 ) => void;
 
 export class FighterRenderer {
@@ -216,7 +217,7 @@ export class FighterRenderer {
         // a `signatureFx` callback at construction; we invoke it now in
         // world-space so VFX can spawn on the main camera.
         if (this.signatureCallback) {
-          this.signatureCallback(move.id, x, y - f.body.h * 0.45, f.facing, playerIndex);
+          this.signatureCallback(move.id, x, y - f.body.h * 0.45, f.facing, playerIndex, charId);
         }
       }
     }
@@ -282,6 +283,12 @@ export class FighterRenderer {
       base.shoulderFront = -0.78 + phase * 0.25;
       base.shoulderBack = 1.05 - phase * 0.25;
       base.torso = -Math.PI / 2 + 0.05;
+      // Head bob — body bobs UP twice per leg cycle (when both legs are
+      // mid-step). Out of phase with leg-pump (sin → cos) so head dips
+      // when foot strikes. Real walk-cycle physics in 2 lines.
+      const bobAmt = Math.abs(Math.cos(stepTick * 0.45 * STEP)) * speedRatio * 0.04;
+      base.head = -Math.PI / 2 + bobAmt;
+      base.neck = -Math.PI / 2 + bobAmt * 0.5;
     } else if (f.fsm.is('Crouch') || f.fsm.is('JumpSquat')) {
       base.hipBack = Math.PI / 2 + 0.55;
       base.hipFront = Math.PI / 2 - 0.55;
@@ -416,44 +423,82 @@ export class FighterRenderer {
       } else if (id === 'hipBack' || id === 'hipFront') {
         const back = id === 'hipBack';
         const knee = back ? tr.kneeBack : tr.kneeFront;
-        this.drawCapsule(g, t.startX, t.startY, t.endX, t.endY, t.radius, back ? palette.darkShade : palette.dark, palette.outline);
+        const baseR = t.radius;
+        const kneeR = baseR * 0.78; // narrower at knee — thigh tapers
+        const c = back ? palette.darkShade : palette.dark;
+        const hi = back ? undefined : palette.darkHi;
+        this.drawCapsule(g, t.startX, t.startY, t.endX, t.endY, baseR, c, palette.outline, kneeR, hi);
         // joint disc at knee
-        g.fillStyle(palette.outline, 1).fillCircle(knee.startX, knee.startY, t.radius + 0.5);
-        g.fillStyle(back ? palette.darkShade : palette.dark, 1).fillCircle(knee.startX, knee.startY, t.radius - 0.5);
+        g.fillStyle(palette.outline, 1).fillCircle(knee.startX, knee.startY, kneeR + 0.5);
+        g.fillStyle(c, 1).fillCircle(knee.startX, knee.startY, kneeR - 0.5);
+        if (!back) {
+          g.fillStyle(palette.accent, 0.7);
+          g.fillTriangle(knee.startX - 3, knee.startY + 1, knee.startX + 3, knee.startY + 1, knee.startX, knee.startY + 5);
+        }
       } else if (id === 'kneeBack' || id === 'kneeFront') {
         const back = id === 'kneeBack';
-        this.drawCapsule(g, t.startX, t.startY, t.endX, t.endY, t.radius, back ? palette.darkShade : palette.dark, palette.outline);
+        const c = back ? palette.darkShade : palette.dark;
+        const hi = back ? undefined : palette.darkHi;
+        const startR = t.radius * 0.92;
+        const endR = t.radius * 0.98; // ankle slightly thicker for boot taper
+        this.drawCapsule(g, t.startX, t.startY, t.endX, t.endY, startR, c, palette.outline, endR, hi);
       } else if (id === 'footBack' || id === 'footFront') {
-        // Boot — wedge ellipse pointing forward.
+        // Boot — fancier wedge: heel + toe taper, lit top edge, dark sole.
         const back = id === 'footBack';
-        g.fillStyle(palette.outline, 1).fillEllipse(t.startX, t.startY + 2, t.radius * 2.6, t.radius * 1.6);
-        g.fillStyle(back ? palette.darkShade : palette.darkHi, 1).fillEllipse(t.startX, t.startY + 1, t.radius * 2.4, t.radius * 1.4);
+        const baseColor = back ? palette.darkShade : palette.darkHi;
+        // outline
+        g.fillStyle(palette.outline, 1).fillEllipse(t.startX, t.startY + 2, t.radius * 2.8, t.radius * 1.8);
+        // sole shadow
+        g.fillStyle(0x0a0a14, 0.7).fillEllipse(t.startX, t.startY + 4, t.radius * 2.6, 5);
+        // boot body
+        g.fillStyle(baseColor, 1).fillEllipse(t.startX, t.startY + 1, t.radius * 2.4, t.radius * 1.4);
+        // lit top
+        if (!back) {
+          g.fillStyle(palette.bodyHi, 0.55).fillEllipse(t.startX - 1, t.startY - 1, t.radius * 1.8, t.radius * 0.7);
+        }
+        // toe-cap
+        g.fillStyle(palette.accent, 0.85).fillRect(t.startX + (back ? -t.radius * 1.0 : t.radius * 0.4), t.startY - 1, t.radius * 0.6, 3);
       } else if (id === 'shoulderBack' || id === 'shoulderFront') {
         const back = id === 'shoulderBack';
         const upper = back ? tr.shoulderBack : tr.shoulderFront;
         const elb = back ? tr.elbowBack : tr.elbowFront;
         const armColor = back ? palette.bodyShade : palette.body;
-        // pauldron disc at shoulder
+        // pauldron disc at shoulder — tiered: outline → mid → highlight
         g.fillStyle(palette.outline, 1).fillCircle(upper.startX, upper.startY, upper.radius + 1.5);
         g.fillStyle(armColor, 1).fillCircle(upper.startX, upper.startY, upper.radius + 0.5);
-        g.fillStyle(palette.bodyHi, 0.6).fillCircle(upper.startX - 2, upper.startY - 2, upper.radius * 0.55);
-        // upper arm capsule
-        this.drawCapsule(g, upper.startX, upper.startY, upper.endX, upper.endY, upper.radius, armColor, palette.outline);
-        // elbow disc + forearm capsule
-        g.fillStyle(palette.outline, 1).fillCircle(elb.startX, elb.startY, elb.radius + 0.5);
-        g.fillStyle(armColor, 1).fillCircle(elb.startX, elb.startY, elb.radius - 0.5);
-        // forearm rendered from its own bone iteration below
+        g.fillStyle(palette.bodyHi, 0.7).fillCircle(upper.startX - 2, upper.startY - 2, upper.radius * 0.55);
+        // shoulder rivets
+        if (!back) {
+          g.fillStyle(palette.metalAccent, 0.9).fillCircle(upper.startX - 3, upper.startY + 2, 1);
+          g.fillStyle(palette.metalAccent, 0.9).fillCircle(upper.startX + 3, upper.startY + 2, 1);
+        }
+        // upper arm tapers narrower at elbow
+        const upR = upper.radius;
+        const elbR = upper.radius * 0.85;
+        this.drawCapsule(g, upper.startX, upper.startY, upper.endX, upper.endY, upR, armColor, palette.outline, elbR, back ? undefined : palette.bodyHi);
+        // elbow disc
+        g.fillStyle(palette.outline, 1).fillCircle(elb.startX, elb.startY, elbR + 0.5);
+        g.fillStyle(armColor, 1).fillCircle(elb.startX, elb.startY, elbR - 0.5);
       } else if (id === 'elbowBack' || id === 'elbowFront') {
         const back = id === 'elbowBack';
         const armColor = back ? palette.bodyShade : palette.body;
-        this.drawCapsule(g, t.startX, t.startY, t.endX, t.endY, t.radius, armColor, palette.outline);
+        // Forearm — slightly narrower at wrist (taper)
+        const startR = t.radius;
+        const endR = t.radius * 0.88;
+        this.drawCapsule(g, t.startX, t.startY, t.endX, t.endY, startR, armColor, palette.outline, endR, back ? undefined : palette.bodyHi);
       } else if (id === 'handBack' || id === 'handFront') {
         const back = id === 'handBack';
         const handColor = back ? this.tintBlend(palette.dark, 0x000000, 0.3) : palette.dark;
-        // gauntlet
+        // gauntlet — outline + dark fill + highlight knuckle pad
         g.fillStyle(palette.outline, 1).fillCircle(t.startX, t.startY, t.radius);
         g.fillStyle(handColor, 1).fillCircle(t.startX, t.startY, t.radius - 1);
-        g.fillStyle(palette.darkHi, 0.4).fillCircle(t.startX - 1, t.startY - 1, t.radius * 0.45);
+        g.fillStyle(palette.darkHi, 0.5).fillCircle(t.startX - 1, t.startY - 1, t.radius * 0.45);
+        // 3 knuckle dots
+        if (!back) {
+          for (let k = 0; k < 3; k++) {
+            g.fillStyle(palette.metalAccent, 0.6).fillCircle(t.startX - 3 + k * 2, t.startY - 3, 0.7);
+          }
+        }
         // wrist accent ring
         g.lineStyle(1.5, palette.accent, 0.85).strokeCircle(t.startX, t.startY, t.radius - 0.3);
         g.lineStyle(0, 0, 0);
@@ -544,6 +589,31 @@ export class FighterRenderer {
     const pecH = len * 0.30;
     g.fillStyle(palette.bodyHi, 0.55).fillEllipse(cmidX - px * pecW * 0.55, cmidY - py * pecW * 0.55, pecW, pecH);
     g.fillStyle(palette.bodyHi, 0.55).fillEllipse(cmidX + px * pecW * 0.55, cmidY + py * pecW * 0.55, pecW, pecH);
+    // Pec plate outlines — fine line trace gives the edge between plates
+    g.lineStyle(0.8, palette.outline, 0.55).strokeEllipse(cmidX - px * pecW * 0.55, cmidY - py * pecW * 0.55, pecW, pecH);
+    g.strokeEllipse(cmidX + px * pecW * 0.55, cmidY + py * pecW * 0.55, pecW, pecH);
+    g.lineStyle(0, 0, 0);
+
+    // Vertical chest seam — single line down the middle of the breastplate
+    // (where two halves of plate armor join). Reads as armor detail at any
+    // size and gives the silhouette an obvious centerline.
+    g.lineStyle(1, palette.bodyShade, 0.85);
+    g.lineBetween(sx + dx * 0.95, sy + dy * 0.95, sx + dx * 0.30, sy + dy * 0.30);
+    g.lineStyle(0, 0, 0);
+
+    // Rivet pattern — 4 small dots arranged around the chest periphery.
+    // Real medieval breastplate had rivets at corners; we simulate with
+    // metalAccent dots placed along the armor seam edges.
+    const rivets: Array<[number, number]> = [
+      [sx + dx * 0.85 + px * shoulderW * 0.7, sy + dy * 0.85 + py * shoulderW * 0.7],
+      [sx + dx * 0.85 - px * shoulderW * 0.7, sy + dy * 0.85 - py * shoulderW * 0.7],
+      [sx + dx * 0.55 + px * chestW * 0.85, sy + dy * 0.55 + py * chestW * 0.85],
+      [sx + dx * 0.55 - px * chestW * 0.85, sy + dy * 0.55 - py * chestW * 0.85]
+    ];
+    for (const [rx, ry] of rivets) {
+      g.fillStyle(palette.outline, 1).fillCircle(rx, ry, 1.4);
+      g.fillStyle(palette.metalAccent, 1).fillCircle(rx, ry, 0.8);
+    }
 
     // Belt — ellipse at waist.
     const wcenterX = sx + dx * 0.30;
@@ -699,42 +769,81 @@ export class FighterRenderer {
     const grip = v.weaponGrip;
     const metal = v.weaponMetal;
     const sheen = 0xffffff;
+    const dark = 0x0a0a14;
     switch (v.weapon) {
       case 'spear': {
-        // Pole + tip
-        g.fillStyle(0x0a0a14, 1).fillRect(-5, -2, 56, 4);
+        // Pole — outline + grip + leather wraps for grip texture
+        g.fillStyle(dark, 1).fillRect(-5, -2, 56, 4);
         g.fillStyle(grip, 1).fillRect(-4, -1.5, 54, 3);
-        // Tip
-        g.fillStyle(0x0a0a14, 1).fillTriangle(50, -7, 50, 7, 64, 0);
+        // Grip wraps — 3 darker bands (leather wrapping detail)
+        g.fillStyle(dark, 0.6);
+        g.fillRect(2, -1.5, 2, 3);
+        g.fillRect(10, -1.5, 2, 3);
+        g.fillRect(18, -1.5, 2, 3);
+        // Banner wrap below tip — accent color flag tied to spear
+        g.fillStyle(dark, 1).fillRect(40, -3, 4, 6);
+        const bannerColor = v.plumeColor ?? 0xc94a4a;
+        g.fillStyle(bannerColor, 0.95);
+        g.fillTriangle(40, 3, 40, 12, 32, 8);
+        g.fillStyle(0xffffff, 0.3).fillTriangle(40, 4, 40, 8, 36, 7);
+        // Spear head — leaf-shaped tip with cross piece
+        g.fillStyle(dark, 1).fillRect(48, -2, 4, 4);
+        g.fillStyle(metal, 1).fillRect(49, -1.5, 3, 3);
+        // Tip with mid ridge
+        g.fillStyle(dark, 1).fillTriangle(50, -7, 50, 7, 64, 0);
         g.fillStyle(metal, 1).fillTriangle(51, -6, 51, 6, 62, 0);
-        g.fillStyle(sheen, 0.5).fillRect(53, -1, 6, 1);
+        // Mid ridge highlight
+        g.fillStyle(0xffffff, 0.7).fillRect(53, -0.5, 7, 1);
+        g.fillStyle(sheen, 0.4).fillRect(53, -2, 5, 1);
         break;
       }
       case 'dagger': {
-        g.fillStyle(0x0a0a14, 1).fillRect(-7, -2, 7, 4);
+        // Pommel — round cap with jewel
+        g.fillStyle(dark, 1).fillCircle(-9, 0, 3);
+        g.fillStyle(grip, 1).fillCircle(-9, 0, 2.5);
+        g.fillStyle(0xffd34d, 0.9).fillCircle(-9, 0, 1.2);
+        // Grip with leather wrap bands
+        g.fillStyle(dark, 1).fillRect(-7, -2, 7, 4);
         g.fillStyle(grip, 1).fillRect(-6, -1.5, 6, 3);
+        g.fillStyle(dark, 0.6).fillRect(-4, -1.5, 1, 3);
+        g.fillStyle(dark, 0.6).fillRect(-1, -1.5, 1, 3);
+        // Crossguard — protruding tab below grip
+        g.fillStyle(dark, 1).fillRect(-1, -4, 3, 8);
+        g.fillStyle(metal, 1).fillRect(0, -3, 2, 6);
         // Blade
-        g.fillStyle(0x0a0a14, 1).fillRect(0, -3, 16, 6);
-        g.fillStyle(0x0a0a14, 1).fillTriangle(16, -3, 16, 3, 22, 0);
+        g.fillStyle(dark, 1).fillRect(0, -3, 16, 6);
+        g.fillStyle(dark, 1).fillTriangle(16, -3, 16, 3, 22, 0);
         g.fillStyle(metal, 1).fillRect(1, -2, 14, 4);
         g.fillStyle(metal, 1).fillTriangle(15, -2, 15, 2, 21, 0);
+        // Fuller (groove down center) + sheen
+        g.fillStyle(dark, 0.4).fillRect(2, -0.5, 12, 1);
         g.fillStyle(sheen, 0.5).fillRect(2, -2, 12, 1);
         break;
       }
       case 'sword': {
-        g.fillStyle(0x0a0a14, 1).fillRect(-9, -3, 9, 6);
+        // Pommel
+        g.fillStyle(dark, 1).fillCircle(-11, 0, 3);
+        g.fillStyle(metal, 1).fillCircle(-11, 0, 2.5);
+        // Grip
+        g.fillStyle(dark, 1).fillRect(-9, -3, 9, 6);
         g.fillStyle(grip, 1).fillRect(-8, -2, 8, 4);
-        g.fillStyle(0x0a0a14, 1).fillRect(-3, -7, 5, 14);
-        g.fillStyle(metal, 1).fillRect(-2, -6, 3, 12);
-        g.fillStyle(0x0a0a14, 1).fillRect(0, -3, 32, 6);
-        g.fillStyle(0x0a0a14, 1).fillTriangle(32, -3, 32, 3, 39, 0);
+        g.fillStyle(dark, 0.6).fillRect(-6, -2, 1, 4);
+        g.fillStyle(dark, 0.6).fillRect(-3, -2, 1, 4);
+        // Crossguard — wider with end caps
+        g.fillStyle(dark, 1).fillRect(-3, -8, 5, 16);
+        g.fillStyle(metal, 1).fillRect(-2, -7, 3, 14);
+        g.fillStyle(0xffd34d, 0.9).fillCircle(-1, -7, 1.2);
+        g.fillStyle(0xffd34d, 0.9).fillCircle(-1, 7, 1.2);
+        // Blade with fuller
+        g.fillStyle(dark, 1).fillRect(0, -3, 32, 6);
+        g.fillStyle(dark, 1).fillTriangle(32, -3, 32, 3, 39, 0);
         g.fillStyle(metal, 1).fillRect(1, -2, 30, 4);
         g.fillStyle(metal, 1).fillTriangle(31, -2, 31, 2, 38, 0);
-        g.fillStyle(sheen, 0.5).fillRect(2, -2, 28, 1);
+        g.fillStyle(dark, 0.45).fillRect(2, -0.5, 28, 1);
+        g.fillStyle(sheen, 0.55).fillRect(2, -2, 28, 1);
         break;
       }
       default:
-        // Fallback — a small stick
         g.fillStyle(grip, 1).fillRect(-2, -1, 24, 2);
     }
     void f;
@@ -972,8 +1081,15 @@ export class FighterRenderer {
     y2: number,
     r: number,
     color: number,
-    outline: number
+    outline: number,
+    r2 = r,
+    highlight?: number
   ): void {
+    // Tapered capsule — radius interpolates from r at (x1,y1) to r2 at
+    // (x2,y2). When r === r2 this collapses to a uniform capsule.
+    // The optional `highlight` argument adds a 2-tone lit band along the
+    // upper-left side of the bone, giving a subtle 3D read instead of
+    // flat fill.
     const dx = x2 - x1;
     const dy = y2 - y1;
     const len = Math.hypot(dx, dy);
@@ -984,17 +1100,39 @@ export class FighterRenderer {
     }
     const px = -dy / len;
     const py = dx / len;
-    const oR = r + 1;
+    // Outline (slightly enlarged) — also tapered.
+    const o1 = r + 1;
+    const o2 = r2 + 1;
     g.fillStyle(outline, 1);
-    g.fillTriangle(x1 + px * oR, y1 + py * oR, x1 - px * oR, y1 - py * oR, x2 + px * oR, y2 + py * oR);
-    g.fillTriangle(x2 + px * oR, y2 + py * oR, x2 - px * oR, y2 - py * oR, x1 - px * oR, y1 - py * oR);
-    g.fillCircle(x1, y1, oR);
-    g.fillCircle(x2, y2, oR);
+    g.fillTriangle(x1 + px * o1, y1 + py * o1, x1 - px * o1, y1 - py * o1, x2 + px * o2, y2 + py * o2);
+    g.fillTriangle(x2 + px * o2, y2 + py * o2, x2 - px * o2, y2 - py * o2, x1 - px * o1, y1 - py * o1);
+    g.fillCircle(x1, y1, o1);
+    g.fillCircle(x2, y2, o2);
+    // Body fill
     g.fillStyle(color, 1);
-    g.fillTriangle(x1 + px * r, y1 + py * r, x1 - px * r, y1 - py * r, x2 + px * r, y2 + py * r);
-    g.fillTriangle(x2 + px * r, y2 + py * r, x2 - px * r, y2 - py * r, x1 - px * r, y1 - py * r);
+    g.fillTriangle(x1 + px * r, y1 + py * r, x1 - px * r, y1 - py * r, x2 + px * r2, y2 + py * r2);
+    g.fillTriangle(x2 + px * r2, y2 + py * r2, x2 - px * r2, y2 - py * r2, x1 - px * r, y1 - py * r);
     g.fillCircle(x1, y1, r);
-    g.fillCircle(x2, y2, r);
+    g.fillCircle(x2, y2, r2);
+    // Lit-edge highlight (upper-left side of bone). Skip if no highlight
+    // color requested. We cheat the "upper-left" with px,py since +y is
+    // down: if the bone runs roughly horizontal the highlight sits above
+    // the centerline, otherwise it sits on the +px side.
+    if (highlight !== undefined) {
+      const sign = py < 0 ? 1 : -1;
+      const hr1 = Math.max(0, r - 1.4);
+      const hr2 = Math.max(0, r2 - 1.4);
+      g.fillStyle(highlight, 0.55);
+      g.fillTriangle(
+        x1 + px * sign * hr1,
+        y1 + py * sign * hr1,
+        x1,
+        y1,
+        x2 + px * sign * hr2,
+        y2 + py * sign * hr2
+      );
+      g.fillTriangle(x2 + px * sign * hr2, y2 + py * sign * hr2, x2, y2, x1, y1);
+    }
   }
 
   /** Approximate fighter silhouette AABB in fighter-local space. */

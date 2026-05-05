@@ -321,33 +321,444 @@ export class VFX {
    * read-at-a-glance effect that no other move uses, so 100ms of footage
    * tells a viewer "that was Lancer's dolphin slash" or "Skirmisher just
    * vanished".
+   *
+   * `charId` is optional and lets per-character variants of the same
+   * generic move ID (upB / sideB / downB) layer their distinct elemental
+   * theme: Lancer = thunder + flame (heated steel knight); Skirmisher =
+   * frost + smoke + spark (twin-dagger trickster).
    */
-  signatureVFX(moveId: string, x: number, y: number, facing: 1 | -1, accent: number): void {
+  signatureVFX(moveId: string, x: number, y: number, facing: 1 | -1, accent: number, charId?: string): void {
     switch (moveId) {
-      case 'upB': // dispatched by name; per-character handled inline below
-        this.dolphinSlashOrVanish(x, y, facing, accent);
+      case 'upB':
+        if (charId === 'lancer') {
+          this.dolphinSlashFX(x, y, facing, accent);
+          this.lightningBolt(x, y, x, y - 90, 0xeaf2ff);
+        } else {
+          this.vanishFX(x, y, facing);
+        }
         return;
       case 'fsmash':
         this.heavyChargeBurst(x, y, facing, accent);
+        if (charId === 'lancer') this.flameTrail(x, y, facing, 56);
+        else if (charId === 'huntress') this.frostShards(x, y, facing);
         return;
       case 'neutralB':
         this.chargeRelease(x, y, facing);
+        if (charId === 'huntress') this.iceNeedleGlint(x, y, facing);
         return;
       case 'sideB':
         this.signatureWhip(x, y, facing, accent);
+        if (charId === 'huntress') this.sparkTrail(x, y, facing, 80);
+        else if (charId === 'lancer') this.flameTrail(x, y, facing, 50);
         return;
       case 'downB':
         this.counterAura(x, y, accent);
+        if (charId === 'lancer') this.frostBurst(x, y);
         return;
       case 'dair':
       case 'lancer_dair_spike':
       case 'skirmisher_dair_finisher':
         this.spikeShockwave(x, y);
+        if (charId === 'lancer') this.fireCrash(x, y);
+        else if (charId === 'huntress') this.fireSpiral(x, y);
         return;
       case 'usmash':
         this.verticalKOFlash(x, y, accent);
+        if (charId === 'lancer') this.lightningBolt(x, y, x, y - 110, 0xfff3a8);
+        return;
+      case 'utilt':
+        if (charId === 'lancer') this.flameTrail(x, y - 30, facing, 36, true);
+        return;
+      case 'fair':
+      case 'bair':
+        // Light wind-cut for aerials
+        this.windCut(x, y, facing, moveId === 'bair' ? -1 : 1);
         return;
     }
+  }
+
+  // ============================================================
+  //  ELEMENTAL VFX HELPERS
+  //  These read as "magic" but stay grounded in physical/mythic
+  //  imagery (heated steel, lightning storm, mountain frost, sparks
+  //  from clashing metal). Halal-relaxed compatible.
+  // ============================================================
+
+  /**
+   * Flame trail — orange/yellow flickering particles rising from along
+   * a horizontal path (for spear thrusts / chain whips). Particles use
+   * negative gravity (rise) and color-shift from yellow → orange → red
+   * over their lifetime so it reads as fire physics, not a static trail.
+   */
+  private flameTrail(x: number, y: number, facing: 1 | -1, length: number, vertical = false): void {
+    const N = 12;
+    for (let i = 0; i < N; i++) {
+      const t = i / (N - 1);
+      const px = vertical ? x + (Math.random() - 0.5) * 8 : x + facing * t * length;
+      const py = vertical ? y - t * length : y + (Math.random() - 0.5) * 6;
+      const g = this.scene.add.graphics({ x: px, y: py }).setDepth(46).setBlendMode(Phaser.BlendModes.ADD);
+      const r = 4 + Math.random() * 3;
+      const c = i < N * 0.4 ? 0xffe04d : i < N * 0.7 ? 0xff7733 : 0xff3322;
+      g.fillStyle(c, 0.75).fillCircle(0, 0, r);
+      g.fillStyle(0xffffff, 0.5).fillCircle(0, 0, r * 0.4);
+      this.scene.tweens.add({
+        targets: g,
+        y: py - 18 - Math.random() * 14,
+        x: px + (Math.random() - 0.5) * 8,
+        alpha: 0,
+        scale: 0.3,
+        duration: 320 + Math.random() * 180,
+        ease: 'Cubic.easeOut',
+        onComplete: () => g.destroy()
+      });
+    }
+  }
+
+  /**
+   * Lightning bolt — recursive midpoint-displacement zigzag from
+   * (x1,y1) to (x2,y2). Two-pass render: outer halo (alpha 0.4, 4px) +
+   * inner core (alpha 1, 1px). Lives ~80ms — lightning is FAST.
+   */
+  private lightningBolt(x1: number, y1: number, x2: number, y2: number, color = 0xffffff): void {
+    const points = this.midpointDisplace(x1, y1, x2, y2, 4, 24);
+    const halo = this.scene.add.graphics().setDepth(47).setBlendMode(Phaser.BlendModes.ADD);
+    halo.lineStyle(5, color, 0.45);
+    halo.beginPath();
+    halo.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) halo.lineTo(points[i].x, points[i].y);
+    halo.strokePath();
+
+    const core = this.scene.add.graphics().setDepth(48).setBlendMode(Phaser.BlendModes.ADD);
+    core.lineStyle(1.5, 0xffffff, 1);
+    core.beginPath();
+    core.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) core.lineTo(points[i].x, points[i].y);
+    core.strokePath();
+
+    this.scene.tweens.add({
+      targets: [halo, core],
+      alpha: 0,
+      duration: 180,
+      ease: 'Cubic.easeOut',
+      onComplete: () => {
+        halo.destroy();
+        core.destroy();
+      }
+    });
+  }
+
+  /**
+   * Recursive midpoint displacement for lightning paths. Each iteration
+   * splits every segment in half and pushes the midpoint perpendicular
+   * by a randomized amount (halved each level). Tutsplus 2D-Lightning
+   * algorithm in 12 lines.
+   */
+  private midpointDisplace(
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    depth: number,
+    sway: number
+  ): { x: number; y: number }[] {
+    let pts = [
+      { x: x1, y: y1 },
+      { x: x2, y: y2 }
+    ];
+    for (let d = 0; d < depth; d++) {
+      const next: { x: number; y: number }[] = [];
+      for (let i = 0; i < pts.length - 1; i++) {
+        const a = pts[i];
+        const b = pts[i + 1];
+        const mx = (a.x + b.x) / 2;
+        const my = (a.y + b.y) / 2;
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const len = Math.sqrt(dx * dx + dy * dy) || 1;
+        const px = -dy / len;
+        const py = dx / len;
+        const off = (Math.random() - 0.5) * sway;
+        next.push(a, { x: mx + px * off, y: my + py * off });
+      }
+      next.push(pts[pts.length - 1]);
+      pts = next;
+      sway *= 0.5;
+    }
+    return pts;
+  }
+
+  /**
+   * Frost burst — radial cyan crystal shards flying outward + soft
+   * mist ring. For Lancer counter (frozen blade impact) and other
+   * "ice-magic" beats.
+   */
+  private frostBurst(x: number, y: number): void {
+    const ring = this.scene.add.graphics({ x, y }).setDepth(45).setBlendMode(Phaser.BlendModes.ADD);
+    ring.fillStyle(0xcfeefa, 0.5).fillCircle(0, 0, 16);
+    this.scene.tweens.add({
+      targets: ring,
+      scale: 2.3,
+      alpha: 0,
+      duration: 320,
+      onComplete: () => ring.destroy()
+    });
+    // 8 crystalline diamond shards
+    for (let i = 0; i < 8; i++) {
+      const ang = (i / 8) * Math.PI * 2;
+      const dist = 50;
+      const dx = Math.cos(ang) * dist;
+      const dy = Math.sin(ang) * dist;
+      const g = this.scene.add.graphics({ x, y }).setDepth(46).setBlendMode(Phaser.BlendModes.ADD);
+      g.fillStyle(0xeaf6ff, 0.95);
+      g.fillTriangle(-3, -6, 3, -6, 0, 6);
+      g.lineStyle(1, 0xffffff, 0.9);
+      g.lineBetween(0, -6, 0, 6);
+      g.setRotation(ang);
+      this.scene.tweens.add({
+        targets: g,
+        x: x + dx,
+        y: y + dy,
+        alpha: 0,
+        scale: 0.4,
+        duration: 320,
+        ease: 'Cubic.easeOut',
+        onComplete: () => g.destroy()
+      });
+    }
+  }
+
+  /**
+   * Frost shards — narrow cone of ice slivers + chill mist. Used for
+   * Skirmisher's spinning dagger fsmash — emphasizes "cold steel".
+   */
+  private frostShards(x: number, y: number, facing: 1 | -1): void {
+    for (let i = 0; i < 6; i++) {
+      const ang = (-Math.PI / 2 + (i - 3) * 0.18) * facing;
+      const dist = 50 + Math.random() * 30;
+      const dx = Math.cos(ang) * dist * facing;
+      const dy = Math.sin(ang) * dist - 8;
+      const g = this.scene.add.graphics({ x, y }).setDepth(46).setBlendMode(Phaser.BlendModes.ADD);
+      g.fillStyle(0xddf3ff, 0.95);
+      g.fillTriangle(-2, -7, 2, -7, 0, 7);
+      g.setRotation(ang);
+      this.scene.tweens.add({
+        targets: g,
+        x: x + dx,
+        y: y + dy,
+        alpha: 0,
+        scale: 0.5,
+        duration: 280,
+        ease: 'Cubic.easeOut',
+        onComplete: () => g.destroy()
+      });
+    }
+    // Chill mist drift
+    for (let i = 0; i < 4; i++) {
+      const g = this.scene.add.graphics({ x: x + (i - 2) * 8, y }).setDepth(44).setBlendMode(Phaser.BlendModes.ADD);
+      g.fillStyle(0xa8d8f0, 0.4).fillCircle(0, 0, 6 + Math.random() * 4);
+      this.scene.tweens.add({
+        targets: g,
+        x: x + (Math.random() - 0.5) * 50,
+        y: y - 10 - Math.random() * 14,
+        alpha: 0,
+        scale: 1.6,
+        duration: 380,
+        onComplete: () => g.destroy()
+      });
+    }
+  }
+
+  /**
+   * Smoke + ember — vanish/teleport effect. Dark gray puff with a few
+   * orange ember dots, all ascending. Reads as "magical smoke" without
+   * crossing into elemental fire.
+   */
+  private vanishFX(x: number, y: number, _facing: 1 | -1): void {
+    // Dark smoke ring
+    for (let i = 0; i < 8; i++) {
+      const ang = (i / 8) * Math.PI * 2;
+      const dist = 18 + Math.random() * 14;
+      const dx = Math.cos(ang) * dist;
+      const dy = Math.sin(ang) * dist;
+      const g = this.scene.add.graphics({ x, y }).setDepth(44);
+      g.fillStyle(0x2a2a32, 0.7).fillCircle(0, 0, 8 + Math.random() * 3);
+      this.scene.tweens.add({
+        targets: g,
+        x: x + dx,
+        y: y + dy - 16,
+        alpha: 0,
+        scale: 1.8,
+        duration: 380,
+        ease: 'Cubic.easeOut',
+        onComplete: () => g.destroy()
+      });
+    }
+    // Orange ember sparks rising
+    for (let i = 0; i < 10; i++) {
+      const dx = (Math.random() - 0.5) * 30;
+      const g = this.scene.add.graphics({ x, y }).setDepth(46).setBlendMode(Phaser.BlendModes.ADD);
+      g.fillStyle(0xffa54a, 0.9).fillCircle(0, 0, 1.5);
+      this.scene.tweens.add({
+        targets: g,
+        x: x + dx,
+        y: y - 30 - Math.random() * 22,
+        alpha: 0,
+        scale: 0.5,
+        duration: 380 + Math.random() * 120,
+        ease: 'Cubic.easeOut',
+        onComplete: () => g.destroy()
+      });
+    }
+    // Bright flash core
+    const flash = this.scene.add.graphics({ x, y }).setDepth(47).setBlendMode(Phaser.BlendModes.ADD);
+    flash.fillStyle(0xc9ffe0, 0.85).fillCircle(0, 0, 18);
+    this.scene.tweens.add({
+      targets: flash,
+      scale: 2.2,
+      alpha: 0,
+      duration: 220,
+      onComplete: () => flash.destroy()
+    });
+  }
+
+  /** Lancer dolphin slash without lightning (stripped from old fn). */
+  private dolphinSlashFX(x: number, y: number, facing: 1 | -1, _accent: number): void {
+    const ring = this.scene.add.graphics({ x, y }).setDepth(45).setBlendMode(Phaser.BlendModes.ADD);
+    ring.lineStyle(4, 0x9affe0, 0.85).strokeCircle(0, 0, 14);
+    this.scene.tweens.add({
+      targets: ring,
+      scale: 3.5,
+      alpha: 0,
+      duration: 360,
+      ease: 'Cubic.easeOut',
+      onComplete: () => ring.destroy()
+    });
+    for (let i = 0; i < 6; i++) {
+      const ang = -Math.PI / 2 + ((i - 3) / 3) * 0.6;
+      const dist = 50 + Math.random() * 30;
+      const dx = Math.cos(ang) * dist * facing;
+      const dy = Math.sin(ang) * dist;
+      const g = this.scene.add.graphics({ x, y }).setDepth(45).setBlendMode(Phaser.BlendModes.ADD);
+      g.fillStyle(0x9affe0, 0.85).fillCircle(0, 0, 3);
+      this.scene.tweens.add({
+        targets: g,
+        x: x + dx,
+        y: y + dy,
+        alpha: 0,
+        scale: 0.4,
+        duration: 380,
+        ease: 'Cubic.easeOut',
+        onComplete: () => g.destroy()
+      });
+    }
+  }
+
+  /**
+   * Spark trail — bright yellow tiny dots streaking along a path. For
+   * sideB chain whip (steel-on-steel sparks).
+   */
+  private sparkTrail(x: number, y: number, facing: 1 | -1, length: number): void {
+    for (let i = 0; i < 14; i++) {
+      const t = i / 14;
+      const px = x + facing * t * length;
+      const py = y + (Math.random() - 0.5) * 6;
+      const g = this.scene.add.graphics({ x: px, y: py }).setDepth(46).setBlendMode(Phaser.BlendModes.ADD);
+      g.fillStyle(0xfff3a8, 0.95).fillCircle(0, 0, 2);
+      this.scene.tweens.add({
+        targets: g,
+        x: px + (Math.random() - 0.5) * 16,
+        y: py + 6 + Math.random() * 8,
+        alpha: 0,
+        scale: 0.4,
+        duration: 240 + Math.random() * 120,
+        ease: 'Cubic.easeOut',
+        onComplete: () => g.destroy()
+      });
+    }
+  }
+
+  /** Ice needle glint — a flash on each thrown needle. */
+  private iceNeedleGlint(x: number, y: number, facing: 1 | -1): void {
+    for (let i = 0; i < 4; i++) {
+      const dx = facing * (10 + i * 14);
+      const g = this.scene.add.graphics({ x: x + dx, y }).setDepth(47).setBlendMode(Phaser.BlendModes.ADD);
+      g.fillStyle(0xddf3ff, 0.95).fillCircle(0, 0, 3);
+      g.fillStyle(0xffffff, 1).fillCircle(0, 0, 1);
+      this.scene.tweens.add({
+        targets: g,
+        scale: 1.4,
+        alpha: 0,
+        duration: 220 + i * 30,
+        delay: i * 30,
+        onComplete: () => g.destroy()
+      });
+    }
+  }
+
+  /** Fire crash — orange flame fan when dair connects with ground. */
+  private fireCrash(x: number, y: number): void {
+    for (let i = 0; i < 10; i++) {
+      const ang = -Math.PI + ((i - 5) / 5) * Math.PI * 0.5;
+      const dist = 30 + Math.random() * 20;
+      const dx = Math.cos(ang) * dist;
+      const dy = Math.sin(ang) * dist;
+      const g = this.scene.add.graphics({ x, y: y + 18 }).setDepth(46).setBlendMode(Phaser.BlendModes.ADD);
+      const r = 3 + Math.random() * 3;
+      const c = i < 4 ? 0xffe04d : 0xff5522;
+      g.fillStyle(c, 0.85).fillCircle(0, 0, r);
+      this.scene.tweens.add({
+        targets: g,
+        x: x + dx,
+        y: y + 18 + dy * 0.6,
+        alpha: 0,
+        scale: 0.4,
+        duration: 340,
+        ease: 'Cubic.easeOut',
+        onComplete: () => g.destroy()
+      });
+    }
+  }
+
+  /** Fire spiral — Skirmisher dair drill spike. Tight downward spiral. */
+  private fireSpiral(x: number, y: number): void {
+    for (let i = 0; i < 12; i++) {
+      const ang = (i / 12) * Math.PI * 2;
+      const r = 18 + (i % 4) * 4;
+      const px = x + Math.cos(ang) * r * 0.5;
+      const py = y + 4 + i * 3;
+      const g = this.scene.add.graphics({ x: px, y: py }).setDepth(46).setBlendMode(Phaser.BlendModes.ADD);
+      const c = i % 2 === 0 ? 0xffd34d : 0xff5522;
+      g.fillStyle(c, 0.85).fillCircle(0, 0, 3);
+      this.scene.tweens.add({
+        targets: g,
+        x: px + Math.cos(ang + Math.PI / 4) * 10,
+        y: py + 18,
+        alpha: 0,
+        scale: 0.3,
+        duration: 380,
+        delay: i * 8,
+        ease: 'Cubic.easeOut',
+        onComplete: () => g.destroy()
+      });
+    }
+  }
+
+  /** Wind-cut arc for fast aerials. */
+  private windCut(x: number, y: number, facing: 1 | -1, dir: 1 | -1): void {
+    const g = this.scene.add.graphics({ x, y }).setDepth(45).setBlendMode(Phaser.BlendModes.ADD);
+    g.lineStyle(2, 0xeef6ff, 0.65);
+    g.beginPath();
+    const arcDir = facing * dir;
+    g.arc(0, 0, 44, -Math.PI / 4, Math.PI / 4, arcDir < 0);
+    g.strokePath();
+    this.scene.tweens.add({
+      targets: g,
+      alpha: 0,
+      scaleX: 1.4,
+      duration: 200,
+      ease: 'Cubic.easeOut',
+      onComplete: () => g.destroy()
+    });
   }
 
   /** Mint-blue trail + intangible glow — Lancer dolphin / Sheik vanish. */
