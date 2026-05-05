@@ -4,6 +4,7 @@ import { BootScene } from './scenes/BootScene';
 import { TitleScene } from './scenes/TitleScene';
 import { ModeSelectScene } from './scenes/ModeSelectScene';
 import { CharacterSelectScene } from './scenes/CharacterSelectScene';
+import { StageSelectScene } from './scenes/StageSelectScene';
 import { MatchScene } from './scenes/MatchScene';
 
 new Phaser.Game({
@@ -26,5 +27,5 @@ new Phaser.Game({
     autoCenter: Phaser.Scale.CENTER_BOTH
   },
   banner: false,
-  scene: [BootScene, TitleScene, ModeSelectScene, CharacterSelectScene, MatchScene]
+  scene: [BootScene, TitleScene, ModeSelectScene, CharacterSelectScene, StageSelectScene, MatchScene]
 });

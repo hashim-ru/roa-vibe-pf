@@ -260,6 +260,6 @@ export class CharacterSelectScene extends Phaser.Scene {
       c1 = ALL_CHARACTERS.find((c) => c !== c0) ?? c0;
     }
     gameMode.set({ characters: [c0, c1] as [CharacterId, CharacterId] });
-    this.scene.start('Match');
+    this.scene.start('StageSelect');
   }
 }

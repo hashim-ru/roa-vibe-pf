@@ -26,7 +26,8 @@ import { HelplessState } from '../entities/states/special/HelplessState';
 import { LedgeHangState } from '../entities/states/special/LedgeHangState';
 import { KOState } from '../entities/states/special/KOState';
 import { DodgeRollState } from '../entities/states/special/DodgeRollState';
-import { Battlefield, BattlefieldTheme } from '../stages/Battlefield';
+import { Battlefield } from '../stages/Battlefield';
+import { FinalDestination } from '../stages/FinalDestination';
 import { HitboxDebugRenderer } from '../render/HitboxDebugRenderer';
 import { StageRenderer } from '../render/StageRenderer';
 import { FighterRenderer } from '../render/FighterRenderer';
@@ -81,10 +82,11 @@ export class MatchScene extends Phaser.Scene {
     this.restartHint = undefined;
     this.debugVisible = DEBUG.showHitboxes;
 
-    const world = Battlefield.build();
-    new StageRenderer(this, world, BattlefieldTheme);
-
     const cfg = gameMode.get();
+    const stageDef = cfg.stage === 'final-destination' ? FinalDestination : Battlefield;
+    const world = stageDef.build();
+    new StageRenderer(this, world, stageDef.theme);
+
     const buf1 = new InputBuffer();
     const buf2 = new InputBuffer();
     const dev1 = new KeyboardDevice(0, P1_KEYS);
