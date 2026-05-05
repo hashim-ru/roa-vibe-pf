@@ -11,7 +11,7 @@ export class FallState extends State<Fighter> {
   onUpdate(f: Fighter, tick: number): string | null {
     if (f.body.grounded) return 'Idle';
 
-    const ledge = findGrabbableLedge(f);
+    const ledge = findGrabbableLedge(f, tick);
     if (ledge) {
       const hangState = f.fsm.getState<LedgeHangState>('LedgeHang');
       if (hangState) hangState.attach(ledge);

@@ -26,11 +26,24 @@ export class HitstunState extends State<Fighter> {
     f.body.vx *= f.stats.airFriction;
     f.body.vy *= 0.99;
 
+    // Tech roll — if tumbling and player buffered parry in the last 4f
+    // before landing, skip landing lag entirely. Light hitstun (no tumble)
+    // doesn't get tech (Smash convention).
+    if (f.body.grounded && f.tumbling) {
+      if (f.input.bufferedFrames('parry', 4) >= 0) {
+        f.tumbling = false;
+        f.hitstunRemaining = 0;
+        f.pendingLandingLag = 0;
+        return 'Idle';
+      }
+    }
+
     if (f.hitstunRemaining <= 0) {
       if (f.body.grounded) {
         f.pendingLandingLag = 4;
         return 'Land';
       }
+      f.tumbling = false;
       return 'Fall';
     }
     return null;

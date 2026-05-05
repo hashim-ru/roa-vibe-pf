@@ -2,8 +2,8 @@ import { State } from '../../../fsm/State';
 import type { Fighter } from '../../Fighter';
 import type { LedgePoint } from '../../../physics/World';
 
-const LEDGE_INTANGIBLE = 30;
-const LEDGE_GRACE_BEFORE_REGRAB = 30;
+const LEDGE_INTANGIBLE_BASE = 30;
+const LEDGE_GRACE_BEFORE_REGRAB = 20;
 
 export class LedgeHangState extends State<Fighter> {
   readonly id = 'LedgeHang';
@@ -20,15 +20,25 @@ export class LedgeHangState extends State<Fighter> {
     f.body.vx = 0;
     f.body.vy = 0;
     f.facing = this.ledge.facing;
-    f.invincibleUntilTick = tick + LEDGE_INTANGIBLE;
-    f.hurtbox.state = 'intangible';
+    // Ledge regrab decay (Melee canon): 1st grab full intangibility,
+    // 2nd grab × 0.8, 3rd × 0.5, 4th+ × 0. Punishes spam recoveries.
+    const scale = f.ledgeRegrabIntangibilityScale();
+    const intangibleFrames = Math.floor(LEDGE_INTANGIBLE_BASE * scale);
+    if (intangibleFrames > 0) {
+      f.invincibleUntilTick = tick + intangibleFrames;
+      f.hurtbox.state = 'intangible';
+    } else {
+      f.invincibleUntilTick = -1;
+      f.hurtbox.state = 'normal';
+    }
     f.resetAirOptions();
+    f.ledgeRegrabsThisAir += 1;
     this.ledge.occupiedBy = f.playerIndex;
   }
 
   onUpdate(f: Fighter, tick: number): string | null {
     const elapsed = this.elapsed(tick);
-    if (elapsed >= LEDGE_INTANGIBLE) f.hurtbox.state = 'normal';
+    if (elapsed >= LEDGE_INTANGIBLE_BASE) f.hurtbox.state = 'normal';
 
     f.body.vx = 0;
     f.body.vy = 0;
@@ -67,13 +77,15 @@ export class LedgeHangState extends State<Fighter> {
     this.ledge = null;
   }
 
-  private release(f: Fighter, _tick: number): void {
+  private release(f: Fighter, tick: number): void {
     if (this.ledge) {
       this.ledge.occupiedBy = null;
       this.ledge = null;
     }
     f.invincibleUntilTick = -1;
     f.hurtbox.state = 'normal';
-    void LEDGE_GRACE_BEFORE_REGRAB;
+    // Lock out re-grab for 20 frames so the player has to genuinely fall
+    // off and recover instead of insta-regrabbing for fresh intangibility.
+    f.ledgeRegrabLockUntil = tick + LEDGE_GRACE_BEFORE_REGRAB;
   }
 }
