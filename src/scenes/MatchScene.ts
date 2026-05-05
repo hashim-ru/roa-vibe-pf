@@ -298,7 +298,7 @@ export class MatchScene extends Phaser.Scene {
     } else {
       this.debugRenderer.draw(this.fighters[0].world, [], frameClock.tick);
     }
-    this.hud.draw(this.fighters);
+    this.hud.draw(this.fighters, frameClock.tick);
 
     if (this.debugVisible) {
       const sw = this.scale.gameSize.width;

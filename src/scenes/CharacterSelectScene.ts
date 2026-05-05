@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../config/game.config';
 import { gameMode, CharacterId } from '../config/GameMode';
 import { ROSTER, ALL_CHARACTERS } from '../entities/characters/Roster';
+import { CharacterPreview } from '../render/CharacterPreview';
 
 interface SlotState {
   selecting: boolean;
@@ -23,7 +24,7 @@ interface SlotState {
 export class CharacterSelectScene extends Phaser.Scene {
   private slots: SlotState[] = [];
   private slotPanels: Phaser.GameObjects.Graphics[] = [];
-  private slotPreviews: Phaser.GameObjects.Graphics[] = [];
+  private slotPreviews: CharacterPreview[] = [];
   private slotTints: Phaser.GameObjects.Ellipse[] = [];
   private slotNames: Phaser.GameObjects.Text[] = [];
   private slotArch: Phaser.GameObjects.Text[] = [];
@@ -149,9 +150,10 @@ export class CharacterSelectScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // Placeholder preview — solid color card with weapon emblem text. Phase
-    // 2.6 replaces this with a FighterRenderer-driven idle pose preview.
-    const preview = this.add.graphics().setDepth(15);
+    // FighterRenderer-driven idle pose preview — same skeleton, capsule
+    // limbs, helmet, weapon, cape primitives as the in-match render.
+    const initialId = ALL_CHARACTERS[this.slots[slotIndex].cursor];
+    const preview = new CharacterPreview(this, initialId, cx, cy + 80, 2.4);
     this.slotPreviews.push(preview);
 
     const tintColor = slotIndex === 0 ? 0xffd860 : 0x6cb8ff;
@@ -209,42 +211,6 @@ export class CharacterSelectScene extends Phaser.Scene {
     g.lineStyle(3, tint, 0.95).strokeRoundedRect(x, y, w, h, 12);
   }
 
-  /**
-   * Phase 0 placeholder preview: a stylized "card" using the character's
-   * body color as the dominant fill plus weapon + helmet glyph badges.
-   * Phase 2.6 replaces this drawing with a real FighterRenderer pose.
-   */
-  private drawPreviewCard(g: Phaser.GameObjects.Graphics, slotIndex: number, bobOffset: number): void {
-    const s = this.slots[slotIndex];
-    const def = ROSTER[ALL_CHARACTERS[s.cursor]];
-    const v = def.visual;
-    const cx = slotIndex === 0 ? GAME_WIDTH * 0.27 : GAME_WIDTH * 0.73;
-    const cy = GAME_HEIGHT / 2 + 10 + bobOffset;
-    const cardW = 200;
-    const cardH = 200;
-    const x = cx - cardW / 2;
-    const y = cy - cardH / 2 - 40;
-
-    g.clear();
-    // Outline halo
-    g.fillStyle(0x000000, 0.5).fillRect(x - 3, y - 3, cardW + 6, cardH + 6);
-    // Body color fill
-    g.fillStyle(v.bodyColor, 1).fillRect(x, y, cardW, cardH);
-    // Top highlight (lit edge)
-    g.fillStyle(v.highlightColor, 0.6).fillRect(x + 6, y + 6, cardW - 12, 8);
-    // Bottom shadow (form shading)
-    g.fillStyle(v.accentColor, 0.6).fillRect(x + 6, y + cardH - 14, cardW - 12, 8);
-    // Center medallion suggesting weapon/helmet identity
-    const mx = cx;
-    const my = cy - 40;
-    g.fillStyle(v.accentColor, 1).fillCircle(mx, my, 36);
-    g.fillStyle(v.helmetAccent, 1).fillCircle(mx, my, 32);
-    g.fillStyle(v.bodyColor, 1).fillCircle(mx, my, 24);
-    if (v.plumeColor !== undefined) {
-      g.fillStyle(v.plumeColor, 1).fillTriangle(mx - 10, my, mx + 10, my, mx, my - 28);
-    }
-  }
-
   private move(slotIndex: number, dir: number): void {
     const s = this.slots[slotIndex];
     if (!s.selecting) return;
@@ -266,15 +232,15 @@ export class CharacterSelectScene extends Phaser.Scene {
   }
 
   private updatePreviewBob(slotIndex: number): void {
-    const bob = Math.sin(this.bobTick * 0.06) * 2;
-    this.drawPreviewCard(this.slotPreviews[slotIndex], slotIndex, bob);
+    this.slotPreviews[slotIndex].draw(this.bobTick);
   }
 
   private refresh(): void {
     for (let i = 0; i < 2; i++) {
       const s = this.slots[i];
       const def = ROSTER[ALL_CHARACTERS[s.cursor]];
-      this.drawPreviewCard(this.slotPreviews[i], i, 0);
+      this.slotPreviews[i].setCharacter(ALL_CHARACTERS[s.cursor]);
+      this.slotPreviews[i].draw(this.bobTick);
       this.slotNames[i].setText(def.displayName).setColor(s.ready ? '#ffe04d' : '#ffffff');
       this.slotArch[i].setText(def.archetype);
       this.slotDesc[i].setText(def.description);
