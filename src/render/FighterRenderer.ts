@@ -12,6 +12,25 @@ import {
 } from './skeleton/Bone';
 import { Pose, addOffset, easings, interpPose } from './skeleton/Pose';
 import { makeChain, stepChain, VerletChainState } from './skeleton/Verlet';
+import { getAttackPoses } from './skeleton/AttackPoses';
+
+/**
+ * Linearly blend pose `a` toward pose `b` by t ∈ [0, 1]. Bones in either
+ * pose participate; missing bones in one side hold the value from the
+ * other (so partial poses still produce a continuous target).
+ */
+function blendPoses(a: Pose, b: Pose, t: number): Pose {
+  const out: Pose = {};
+  const keys = new Set<BoneId>([...(Object.keys(a) as BoneId[]), ...(Object.keys(b) as BoneId[])]);
+  for (const k of keys) {
+    const av = a[k];
+    const bv = b[k];
+    if (av !== undefined && bv !== undefined) out[k] = av + (bv - av) * t;
+    else if (av !== undefined) out[k] = av;
+    else if (bv !== undefined) out[k] = bv;
+  }
+  return out;
+}
 
 interface PerFighterState {
   bones: Record<BoneId, Bone>;
@@ -41,10 +60,24 @@ const TRAIL_LEN = 8;
  * Aesthetic target: Hollow Knight / Death's Door — flat-vector polygons
  * with ink outlines and painterly shading, NOT pixel art.
  */
+export type SignatureCallback = (
+  moveId: string,
+  worldX: number,
+  worldY: number,
+  facing: 1 | -1,
+  playerIndex: number
+) => void;
+
 export class FighterRenderer {
   private gfxs: Phaser.GameObjects.Graphics[] = [];
   private trailGfxs: Phaser.GameObjects.Graphics[] = [];
   private state: PerFighterState[] = [];
+  /** Optional hook fired on the first active hit frame of every attack. */
+  private signatureCallback: SignatureCallback | null = null;
+
+  setSignatureCallback(cb: SignatureCallback): void {
+    this.signatureCallback = cb;
+  }
 
   constructor(
     private scene: Phaser.Scene,
@@ -127,7 +160,8 @@ export class FighterRenderer {
     const facing = f.facing;
     // Build the pose for the current state. State-driven pose authoring
     // happens in computePose() — here we just consume it.
-    const pose = this.computePose(f, v, tick);
+    const charId = this.characters[playerIndex];
+    const pose = this.computePose(f, v, tick, charId);
     const transforms = solveSkeleton(st.bones, pose);
 
     // Hitstun jitter — Sakurai's "hold the pose but vibrate 1 px" rule.
@@ -167,6 +201,26 @@ export class FighterRenderer {
     // === Weapon at front-hand pivot (drawn after front arm) ===
     this.drawWeapon(g, transforms, v, f, tick);
 
+    // === Smear frame + signature VFX on first active hit ===
+    // Pedro Medeiros / Saint11 trick: on the single frame the hitbox first
+    // becomes active, draw an elongated weapon ghost in the highlight tone
+    // along the swing direction. Plus per-skill signature VFX (vanish puff,
+    // counter aura, etc) that read as character identity at a glance.
+    if (f.fsm.is('Attack') && f.pendingMove) {
+      const phase = tick - f.pendingMove.startedAtTick;
+      const move = f.pendingMove.move;
+      const firstHit = move.frames.find((fr) => fr.hitboxes.length > 0)?.frame ?? -1;
+      if (phase === firstHit && firstHit >= 0) {
+        this.drawSmearFrame(g, transforms, v);
+        // Hand-off to scene-level VFX system if registered. Caller wires
+        // a `signatureFx` callback at construction; we invoke it now in
+        // world-space so VFX can spawn on the main camera.
+        if (this.signatureCallback) {
+          this.signatureCallback(move.id, x, y - f.body.h * 0.45, f.facing, playerIndex);
+        }
+      }
+    }
+
     // === Shield (off-hand back) ===
     if (v.shield !== 'none') this.drawShield(g, transforms, v);
 
@@ -193,7 +247,7 @@ export class FighterRenderer {
   }
 
   /** Compute pose rotations for the current FSM state + animation phase. */
-  private computePose(f: Fighter, v: CharacterVisual, tick: number): Pose {
+  private computePose(f: Fighter, v: CharacterVisual, tick: number, charId: CharacterId): Pose {
     // Stepped animation phase — limbs animate at ~10 fps for a hand-drawn
     // feel, while game-feel timers run at full 60 Hz.
     const STEP = 6;
@@ -257,28 +311,47 @@ export class FighterRenderer {
       const firstHit = move.frames.find((fr) => fr.hitboxes.length > 0)?.frame ?? Math.floor(move.totalFrames * 0.4);
       const lastHit = [...move.frames].reverse().find((fr) => fr.hitboxes.length > 0)?.frame ?? firstHit;
       const recoveryEnd = move.iasaFrame ?? move.totalFrames;
-      const baseRest = -0.78;
-      const windupTarget = v.windupArmAngle ?? -1.4;
+
+      // Look up the per-character per-attack pose table. If absent, fall
+      // back to a single generic anticipation→active→follow-through curve
+      // that mirrors the previous behavior (so any new move that ships
+      // before its pose is authored still animates reasonably).
+      const keyPoses = getAttackPoses(charId, move.id);
+      const restPose: Pose = {
+        shoulderFront: -0.78 + (v.idleLean ?? 0) * 0.4,
+        elbowFront: 0.4,
+        shoulderBack: 1.05,
+        elbowBack: 0.5,
+        torso: -Math.PI / 2,
+        hipBack: Math.PI / 2 + 0.18,
+        hipFront: Math.PI / 2 - 0.18,
+        kneeBack: 0,
+        kneeFront: 0
+      };
+      const anticipation: Pose = keyPoses?.anticipation ?? {
+        shoulderFront: v.windupArmAngle ?? -1.4,
+        elbowFront: 0.6,
+        torso: -Math.PI / 2 - 0.08
+      };
+      const active: Pose = keyPoses?.active ?? {
+        shoulderFront: 0.15,
+        elbowFront: 0.05,
+        torso: -Math.PI / 2 + 0.10
+      };
+      const followThrough: Pose = keyPoses?.followThrough ?? restPose;
 
       if (phase < firstHit) {
-        // Anticipation — ease arm to the character's signature windup pose.
-        const t = phase / Math.max(1, firstHit);
-        const k = easings.easeOutCubic(t);
-        base.shoulderFront = baseRest + (windupTarget - baseRest) * k;
-        base.elbowFront = 0.6 - k * 0.4;
-        base.torso = -Math.PI / 2 - 0.08 * k;
+        const t = easings.easeOutCubic(phase / Math.max(1, firstHit));
+        Object.assign(base, blendPoses(restPose, anticipation, t));
       } else if (phase <= lastHit) {
-        // Active commit — spear/dagger thrust forward, body lunges.
-        base.shoulderFront = 0.15;
-        base.elbowFront = 0.05;
-        base.torso = -Math.PI / 2 + 0.10;
+        // Snap-to-active for crisp commit (no easing — Sakurai canon).
+        Object.assign(base, active);
       } else {
-        // Follow-through — overshoot then settle to rest.
-        const t = Math.min(1, (phase - lastHit) / Math.max(1, recoveryEnd - lastHit));
-        const k = easings.easeOutBack(t, 1.4);
-        base.shoulderFront = 0.15 + (baseRest - 0.15) * k;
-        base.elbowFront = 0.05 + (0.4 - 0.05) * k;
-        base.torso = -Math.PI / 2 + 0.10 - 0.10 * k;
+        const t = easings.easeOutBack(
+          Math.min(1, (phase - lastHit) / Math.max(1, recoveryEnd - lastHit)),
+          1.4
+        );
+        Object.assign(base, blendPoses(active, followThrough, t));
       }
     }
 
@@ -666,6 +739,53 @@ export class FighterRenderer {
     }
     void f;
     void tick;
+    g.restore();
+  }
+
+  /**
+   * Smear frame — drawn on the single tick the active hitbox first appears.
+   * Stretches the weapon along the swing arc (elbow→hand→tip) to read as
+   * motion blur. Two ghost passes (mid-tone + bright highlight) layered to
+   * give a directional "whoosh".
+   *
+   * Hand-rotated like drawWeapon so the smear inherits the active pose.
+   */
+  private drawSmearFrame(
+    g: Phaser.GameObjects.Graphics,
+    tr: Record<BoneId, BoneTransform>,
+    v: CharacterVisual
+  ): void {
+    if (v.weapon === 'none') return;
+    const hand = tr.handFront;
+    const elbow = tr.elbowFront;
+    const angle = Math.atan2(elbow.endY - elbow.startY, elbow.endX - elbow.startX);
+    const reach = (() => {
+      switch (v.weapon) {
+        case 'spear': return 56;
+        case 'twohand': return 44;
+        case 'sword': return 32;
+        case 'axe': return 36;
+        case 'mace': return 24;
+        case 'dagger': return 16;
+        case 'bow': return 14;
+        default: return 12;
+      }
+    })();
+    g.save();
+    g.translateCanvas(hand.startX, hand.startY);
+    g.rotateCanvas(angle);
+    // Two stretched ghost wedges along the swing direction. Outer wedge =
+    // weapon metal tone at low alpha, inner core = white highlight.
+    const len = reach * 1.6;
+    const wid = 7;
+    g.fillStyle(v.weaponMetal, 0.55);
+    g.fillTriangle(0, -wid, 0, wid, len, 0);
+    g.fillStyle(0xffffff, 0.75);
+    g.fillTriangle(2, -wid * 0.55, 2, wid * 0.55, len * 0.85, 0);
+    // Trailing arc behind the weapon hand (negative direction) for a
+    // ghost-tail read on heavy/sweeping moves.
+    g.fillStyle(v.weaponMetal, 0.30);
+    g.fillTriangle(0, -wid * 0.65, 0, wid * 0.65, -len * 0.45, 0);
     g.restore();
   }
 

@@ -129,6 +129,10 @@ export class MatchScene extends Phaser.Scene {
 
     const charIds: CharacterId[] = [cfg.characters[0], cfg.characters[1]];
     this.fighterRenderer = new FighterRenderer(this, this.fighters, charIds);
+    this.fighterRenderer.setSignatureCallback((moveId, x, y, facing, idx) => {
+      const accent = idx === 0 ? 0xffd860 : 0x6cb8ff;
+      this.vfx.signatureVFX(moveId, x, y, facing, accent);
+    });
     this.debugRenderer = new HitboxDebugRenderer(this);
     this.camera = new DynamicCamera(this);
     this.shake = new ScreenShake(this);
@@ -192,6 +196,10 @@ export class MatchScene extends Phaser.Scene {
         launchAngleDeg: launchDeg,
         attackerColor: tint
       });
+      // Dent direction line + voice pop on every hit. Lower-tier hits get
+      // smaller text + no big dent. Heavy hits read as "wham" instantly.
+      if (e.damage >= 5) this.vfx.dentLine(cx, cy, launchDeg, 18 + e.damage);
+      this.vfx.voicePop(cx, cy, e.damage);
       this.shake.add(result.trauma);
       const intensity = Math.min(1, e.damage / 14);
       const dx = Math.sign(v.body.x - a.body.x) * (3 + intensity * 9);

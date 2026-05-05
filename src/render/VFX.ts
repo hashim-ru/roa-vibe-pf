@@ -108,6 +108,60 @@ export class VFX {
     });
   }
 
+  /**
+   * Dent direction line — a short stroke from victim center pointing
+   * toward the launch direction. Reads as "you got hit going THAT way"
+   * (Smash 4 angle indicator generalized).
+   */
+  dentLine(x: number, y: number, launchAngleDeg: number, length = 22): void {
+    const rad = (-launchAngleDeg * Math.PI) / 180;
+    const g = this.scene.add.graphics({ x, y }).setDepth(945);
+    g.lineStyle(3, 0xffffff, 0.9);
+    g.lineBetween(0, 0, Math.cos(rad) * length, Math.sin(rad) * length);
+    g.lineStyle(2, 0xff5566, 1);
+    g.lineBetween(0, 0, Math.cos(rad) * (length - 4), Math.sin(rad) * (length - 4));
+    this.scene.tweens.add({
+      targets: g,
+      alpha: 0,
+      duration: 180,
+      ease: 'Cubic.easeOut',
+      onComplete: () => g.destroy()
+    });
+  }
+
+  /**
+   * Voice pop — random short text burst near victim head ("OOF!", "GAH!",
+   * "TCH!"). Cuphead / Smash convention. Provides a narrative hit-feedback
+   * channel without requiring voice clips (halal: safe with text only).
+   */
+  voicePop(x: number, y: number, damage: number): void {
+    const heavy = damage >= 13;
+    const candidates = heavy ? ['GAH!', 'BLARGH!', 'KKKK!'] : damage >= 7 ? ['OOF!', 'AGH!', 'NGH!'] : ['TCH!', 'UGH!', 'HMP!'];
+    const word = candidates[Math.floor(Math.random() * candidates.length)];
+    const dx = (Math.random() - 0.5) * 30;
+    const text = this.scene.add
+      .text(x + dx, y - 30, word, {
+        fontFamily: 'Cinzel, ui-serif, serif',
+        fontStyle: 'bold',
+        fontSize: heavy ? '24px' : '16px',
+        color: heavy ? '#ff5566' : '#ffd966',
+        stroke: '#000',
+        strokeThickness: 4
+      })
+      .setOrigin(0.5)
+      .setDepth(945)
+      .setRotation((Math.random() - 0.5) * 0.4);
+    this.scene.tweens.add({
+      targets: text,
+      y: y - 70,
+      alpha: 0,
+      scale: heavy ? 1.4 : 1.1,
+      duration: 480,
+      ease: 'Cubic.easeOut',
+      onComplete: () => text.destroy()
+    });
+  }
+
   hurtFlash(x: number, y: number, w: number, h: number): void {
     const flash = this.scene.add.rectangle(x, y - h / 2, w + 6, h + 6, 0xff5050, 0.55);
     flash.setDepth(870);
@@ -259,6 +313,180 @@ export class VFX {
 
   landPoof(x: number, y: number): void {
     this.dust(x, y, 5);
+  }
+
+  /**
+   * Per-skill signature VFX — fired on the first active hit frame of a
+   * named move. Each character's distinctive specials gets a unique
+   * read-at-a-glance effect that no other move uses, so 100ms of footage
+   * tells a viewer "that was Lancer's dolphin slash" or "Skirmisher just
+   * vanished".
+   */
+  signatureVFX(moveId: string, x: number, y: number, facing: 1 | -1, accent: number): void {
+    switch (moveId) {
+      case 'upB': // dispatched by name; per-character handled inline below
+        this.dolphinSlashOrVanish(x, y, facing, accent);
+        return;
+      case 'fsmash':
+        this.heavyChargeBurst(x, y, facing, accent);
+        return;
+      case 'neutralB':
+        this.chargeRelease(x, y, facing);
+        return;
+      case 'sideB':
+        this.signatureWhip(x, y, facing, accent);
+        return;
+      case 'downB':
+        this.counterAura(x, y, accent);
+        return;
+      case 'dair':
+      case 'lancer_dair_spike':
+      case 'skirmisher_dair_finisher':
+        this.spikeShockwave(x, y);
+        return;
+      case 'usmash':
+        this.verticalKOFlash(x, y, accent);
+        return;
+    }
+  }
+
+  /** Mint-blue trail + intangible glow — Lancer dolphin / Sheik vanish. */
+  private dolphinSlashOrVanish(x: number, y: number, facing: 1 | -1, accent: number): void {
+    const ring = this.scene.add.graphics({ x, y }).setDepth(45).setBlendMode(Phaser.BlendModes.ADD);
+    ring.lineStyle(4, 0x9affe0, 0.85).strokeCircle(0, 0, 14);
+    this.scene.tweens.add({
+      targets: ring,
+      scale: 3.5,
+      alpha: 0,
+      duration: 360,
+      ease: 'Cubic.easeOut',
+      onComplete: () => ring.destroy()
+    });
+    // 8 spiraling particles arcing upward
+    for (let i = 0; i < 8; i++) {
+      const ang = -Math.PI / 2 + ((i - 4) / 4) * 0.7;
+      const dist = 60 + Math.random() * 30;
+      const dx = Math.cos(ang) * dist * facing;
+      const dy = Math.sin(ang) * dist;
+      const g = this.scene.add.graphics({ x, y }).setDepth(45).setBlendMode(Phaser.BlendModes.ADD);
+      g.fillStyle(accent === 0xffd860 ? 0x9affe0 : 0xc9ffe0, 0.85).fillCircle(0, 0, 3);
+      this.scene.tweens.add({
+        targets: g,
+        x: x + dx,
+        y: y + dy,
+        alpha: 0,
+        scale: 0.4,
+        duration: 380,
+        ease: 'Cubic.easeOut',
+        onComplete: () => g.destroy()
+      });
+    }
+  }
+
+  /** Heavy fsmash charge release — 3 expanding rings. */
+  private heavyChargeBurst(x: number, y: number, facing: 1 | -1, color: number): void {
+    for (let i = 0; i < 3; i++) {
+      const r = this.scene.add.graphics({ x: x + i * 8 * facing, y }).setDepth(45).setBlendMode(Phaser.BlendModes.ADD);
+      r.lineStyle(3 - i, color, 0.8 - i * 0.2).strokeCircle(0, 0, 10 + i * 6);
+      this.scene.tweens.add({
+        targets: r,
+        scale: 2.5,
+        alpha: 0,
+        duration: 280 + i * 60,
+        ease: 'Cubic.easeOut',
+        onComplete: () => r.destroy()
+      });
+    }
+  }
+
+  /** Charge-up energy release — beam-like radial pulses. */
+  private chargeRelease(x: number, y: number, facing: 1 | -1): void {
+    for (let i = 0; i < 4; i++) {
+      const ang = (i / 4) * Math.PI - Math.PI / 4;
+      const g = this.scene.add.graphics({ x, y }).setDepth(45).setBlendMode(Phaser.BlendModes.ADD);
+      g.lineStyle(3, 0xfff3a8, 0.85);
+      g.lineBetween(0, 0, Math.cos(ang) * 36 * facing, Math.sin(ang) * 36);
+      this.scene.tweens.add({
+        targets: g,
+        alpha: 0,
+        scale: 1.6,
+        duration: 240,
+        ease: 'Cubic.easeOut',
+        onComplete: () => g.destroy()
+      });
+    }
+  }
+
+  /** SideB whip / chain — long stretched line streak. */
+  private signatureWhip(x: number, y: number, facing: 1 | -1, color: number): void {
+    const g = this.scene.add.graphics({ x, y }).setDepth(45).setBlendMode(Phaser.BlendModes.ADD);
+    g.lineStyle(4, color, 0.85);
+    g.lineBetween(0, 0, 80 * facing, -4);
+    g.lineStyle(2, 0xffffff, 0.95);
+    g.lineBetween(0, 0, 75 * facing, -2);
+    this.scene.tweens.add({
+      targets: g,
+      alpha: 0,
+      scaleX: 1.3,
+      duration: 220,
+      ease: 'Cubic.easeOut',
+      onComplete: () => g.destroy()
+    });
+    // Tip glint
+    const tip = this.scene.add.graphics({ x: x + 80 * facing, y }).setDepth(46).setBlendMode(Phaser.BlendModes.ADD);
+    tip.fillStyle(0xffffff, 1).fillCircle(0, 0, 5);
+    tip.fillStyle(color, 0.7).fillCircle(0, 0, 8);
+    this.scene.tweens.add({
+      targets: tip,
+      scale: 2,
+      alpha: 0,
+      duration: 220,
+      onComplete: () => tip.destroy()
+    });
+  }
+
+  /** Counter active window — colored aura around the parrying fighter. */
+  private counterAura(x: number, y: number, color: number): void {
+    const aura = this.scene.add.graphics({ x, y }).setDepth(45).setBlendMode(Phaser.BlendModes.ADD);
+    aura.lineStyle(3, color, 0.7).strokeCircle(0, 0, 28);
+    this.scene.tweens.add({
+      targets: aura,
+      scale: 1.4,
+      alpha: 0,
+      duration: 320,
+      ease: 'Sine.easeOut',
+      onComplete: () => aura.destroy()
+    });
+  }
+
+  /** Dair spike — downward shockwave + dust kick. */
+  private spikeShockwave(x: number, y: number): void {
+    const wave = this.scene.add.graphics({ x, y: y + 16 }).setDepth(45);
+    wave.lineStyle(3, 0xffe04d, 0.85).strokeEllipse(0, 0, 20, 8);
+    this.scene.tweens.add({
+      targets: wave,
+      scaleX: 4,
+      scaleY: 1.4,
+      alpha: 0,
+      duration: 260,
+      onComplete: () => wave.destroy()
+    });
+    this.dust(x, y + 16, 6);
+  }
+
+  /** Vertical KO move — upward beam streak. */
+  private verticalKOFlash(x: number, y: number, color: number): void {
+    const beam = this.scene.add.graphics({ x, y }).setDepth(45).setBlendMode(Phaser.BlendModes.ADD);
+    beam.fillStyle(color, 0.5).fillRect(-8, -100, 16, 100);
+    beam.fillStyle(0xffffff, 0.85).fillRect(-3, -100, 6, 100);
+    this.scene.tweens.add({
+      targets: beam,
+      alpha: 0,
+      scaleY: 1.4,
+      duration: 280,
+      ease: 'Cubic.easeOut',
+      onComplete: () => beam.destroy()
+    });
   }
 
   clankBurst(x: number, y: number): void {
