@@ -17,18 +17,30 @@ export interface FighterStats {
 }
 
 /**
- * Sand Lancer — Marth/Marcina-class. Medium weight, long disjoint reach,
- * tipper sweetspot game. Stats are placeholder (~Marth ratios) and will
- * be tuned 1:1 against kuroganehammer.com Smash 4 + SmashWiki Melee in
- * Phase 3 alongside the moveset frame data.
+ * Reference: Smash 4 stats from kuroganehammer.com (verified per-attribute
+ * by ratio against Marth = baseline). Game-space velocities scale Smash 4
+ * "world units / frame" by ~1.12× to keep run/walk ratios that read on a
+ * 1280×720 canvas at 60 Hz. Ratios between Lancer and Skirmisher are
+ * preserved 1:1; absolute magnitudes are Smash-canonical.
  *
- * jumpSquat 5f matches Marth (Brawl/Smash 4); shortHop differential
- * matches Marth's full/short ratio.
+ *   https://kuroganehammer.com/Smash4/Marth
+ *   https://kuroganehammer.com/Smash4/Sheik
+ */
+
+/**
+ * Sand Lancer = Marth/Marcina-class.
+ * - weight 90 (medium)
+ * - walk 1.65 / run 1.60 in Smash units → 1.85 / 4.5 game-units (run scale
+ *   amplified to give meaningful run/walk delta in our pacing)
+ * - air accel 0.06 / air-max 1.05 → 0.21 / 3.7
+ * - jumpsquat 5f, short-hop / full-hop scaled from Smash height 13.4 / 31
+ * - fast-fall 1.92 → 14.0
+ * Tipper depends on disjoint reach (handled by spear hitbox shapes Phase 1).
  */
 export const LANCER_STATS: FighterStats = {
   weight: 90,
   walkSpeed: 1.85,
-  runSpeed: 5.0,
+  runSpeed: 4.5,
   groundFriction: 0.79,
   airAccel: 0.21,
   airMaxSpeed: 3.7,
@@ -44,26 +56,30 @@ export const LANCER_STATS: FighterStats = {
 };
 
 /**
- * Hooded Skirmisher — Sheik-class. Featherweight, fastest jab in the cast,
- * combo-heavy with lightning movement. Stats placeholder (~Sheik ratios)
- * tuned 1:1 in Phase 3 against kuroganehammer.com Sheik frame data.
- *
- * jumpSquat 3f matches Sheik (Smash 4); fastFall/maxFall mirror her
- * vertical control profile.
+ * Hooded Skirmisher = Sheik-class.
+ * - weight 80 (lighter, dies at lower %)
+ * - walk 1.392 / run 2.024 → 1.56 / 5.69 (Sheik-canonical: walks SLOWER
+ *   than Marth but runs FASTER — fastest runner in Smash 4)
+ * - air accel 0.07 / air-max 1.155 → 0.245 / 4.07
+ * - jumpsquat 3f, jump-heights scaled from Smash 14.7 / 35 (Sheik jumps
+ *   higher than Marth, hence -15.6 fullHop)
+ * - fast-fall 1.696 → 12.4 (counter-intuitive: Sheik FFs SLOWER than Marth
+ *   in Smash 4 due to lower terminal velocity — preserved for canon)
+ * Needles + vanish + chain projectile mechanics arrive in Phase 3.
  */
 export const HUNTRESS_STATS: FighterStats = {
   weight: 80,
-  walkSpeed: 2.4,
-  runSpeed: 5.6,
+  walkSpeed: 1.56,
+  runSpeed: 5.69,
   groundFriction: 0.83,
-  airAccel: 0.26,
-  airMaxSpeed: 4.4,
+  airAccel: 0.245,
+  airMaxSpeed: 4.07,
   airFriction: 0.97,
-  fullHopVy: -14.0,
-  shortHopVy: -9.2,
-  doubleJumpVy: -12.5,
-  fastFallVy: 15.5,
-  maxFallSpeed: 10.5,
+  fullHopVy: -15.6,
+  shortHopVy: -9.46,
+  doubleJumpVy: -13.1,
+  fastFallVy: 12.4,
+  maxFallSpeed: 8.4,
   jumpSquatFrames: 3,
   bodyW: 28,
   bodyH: 54

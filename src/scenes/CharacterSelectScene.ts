@@ -9,10 +9,21 @@ interface SlotState {
   ready: boolean;
 }
 
+/**
+ * Character select. The previous build rendered Pollinations AI portrait
+ * PNGs (chroma-keyed in BootScene). The tech-demo rebuild swaps that
+ * for a code-rendered preview using FighterRenderer (lands in Phase 2.6),
+ * so all visuals share the flat-vector aesthetic.
+ *
+ * Phase 0 placeholder: each slot shows the character body color as a
+ * solid rectangle plus an emblem indicating helmet/weapon type. Reads
+ * as "card" not "portrait" but communicates archetype clearly until
+ * the real preview lands.
+ */
 export class CharacterSelectScene extends Phaser.Scene {
   private slots: SlotState[] = [];
   private slotPanels: Phaser.GameObjects.Graphics[] = [];
-  private slotPortraits: Phaser.GameObjects.Image[] = [];
+  private slotPreviews: Phaser.GameObjects.Graphics[] = [];
   private slotTints: Phaser.GameObjects.Ellipse[] = [];
   private slotNames: Phaser.GameObjects.Text[] = [];
   private slotArch: Phaser.GameObjects.Text[] = [];
@@ -98,7 +109,7 @@ export class CharacterSelectScene extends Phaser.Scene {
 
   update() {
     this.bobTick += 1;
-    for (let i = 0; i < 2; i++) this.updatePortraitBob(i);
+    for (let i = 0; i < 2; i++) this.updatePreviewBob(i);
   }
 
   private drawBackground(): void {
@@ -138,21 +149,19 @@ export class CharacterSelectScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    const portrait = this.add
-      .image(cx, cy + 10, `portrait_${ALL_CHARACTERS[this.slots[slotIndex].cursor]}`)
-      .setOrigin(0.5, 0.85)
-      .setScale(1.55)
-      .setDepth(15);
-    this.slotPortraits.push(portrait);
+    // Placeholder preview — solid color card with weapon emblem text. Phase
+    // 2.6 replaces this with a FighterRenderer-driven idle pose preview.
+    const preview = this.add.graphics().setDepth(15);
+    this.slotPreviews.push(preview);
 
     const tintColor = slotIndex === 0 ? 0xffd860 : 0x6cb8ff;
     const halo = this.add
-      .ellipse(cx, cy + 22, 200, 28, tintColor, 0.22)
+      .ellipse(cx, cy + 100, 200, 28, tintColor, 0.22)
       .setDepth(12);
     this.slotTints.push(halo);
 
     const name = this.add
-      .text(cx, cy + 90, '', {
+      .text(cx, cy + 130, '', {
         fontFamily: 'Cinzel, ui-serif, serif',
         fontSize: '26px',
         fontStyle: 'bold',
@@ -164,7 +173,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     this.slotNames.push(name);
 
     const arch = this.add
-      .text(cx, cy + 122, '', {
+      .text(cx, cy + 162, '', {
         fontFamily: 'Cinzel, ui-serif, serif',
         fontSize: '17px',
         color: '#9ad0ff'
@@ -173,7 +182,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     this.slotArch.push(arch);
 
     const desc = this.add
-      .text(cx, cy + 156, '', {
+      .text(cx, cy + 196, '', {
         fontFamily: 'ui-monospace, monospace',
         fontSize: '12px',
         color: '#a0a8b8',
@@ -200,6 +209,42 @@ export class CharacterSelectScene extends Phaser.Scene {
     g.lineStyle(3, tint, 0.95).strokeRoundedRect(x, y, w, h, 12);
   }
 
+  /**
+   * Phase 0 placeholder preview: a stylized "card" using the character's
+   * body color as the dominant fill plus weapon + helmet glyph badges.
+   * Phase 2.6 replaces this drawing with a real FighterRenderer pose.
+   */
+  private drawPreviewCard(g: Phaser.GameObjects.Graphics, slotIndex: number, bobOffset: number): void {
+    const s = this.slots[slotIndex];
+    const def = ROSTER[ALL_CHARACTERS[s.cursor]];
+    const v = def.visual;
+    const cx = slotIndex === 0 ? GAME_WIDTH * 0.27 : GAME_WIDTH * 0.73;
+    const cy = GAME_HEIGHT / 2 + 10 + bobOffset;
+    const cardW = 200;
+    const cardH = 200;
+    const x = cx - cardW / 2;
+    const y = cy - cardH / 2 - 40;
+
+    g.clear();
+    // Outline halo
+    g.fillStyle(0x000000, 0.5).fillRect(x - 3, y - 3, cardW + 6, cardH + 6);
+    // Body color fill
+    g.fillStyle(v.bodyColor, 1).fillRect(x, y, cardW, cardH);
+    // Top highlight (lit edge)
+    g.fillStyle(v.highlightColor, 0.6).fillRect(x + 6, y + 6, cardW - 12, 8);
+    // Bottom shadow (form shading)
+    g.fillStyle(v.accentColor, 0.6).fillRect(x + 6, y + cardH - 14, cardW - 12, 8);
+    // Center medallion suggesting weapon/helmet identity
+    const mx = cx;
+    const my = cy - 40;
+    g.fillStyle(v.accentColor, 1).fillCircle(mx, my, 36);
+    g.fillStyle(v.helmetAccent, 1).fillCircle(mx, my, 32);
+    g.fillStyle(v.bodyColor, 1).fillCircle(mx, my, 24);
+    if (v.plumeColor !== undefined) {
+      g.fillStyle(v.plumeColor, 1).fillTriangle(mx - 10, my, mx + 10, my, mx, my - 28);
+    }
+  }
+
   private move(slotIndex: number, dir: number): void {
     const s = this.slots[slotIndex];
     if (!s.selecting) return;
@@ -220,24 +265,16 @@ export class CharacterSelectScene extends Phaser.Scene {
     return this.slots.every((s) => s.ready);
   }
 
-  private updatePortraitBob(slotIndex: number): void {
-    const s = this.slots[slotIndex];
-    const def = ROSTER[ALL_CHARACTERS[s.cursor]];
-    const portrait = this.slotPortraits[slotIndex];
-    const cy = GAME_HEIGHT / 2 - 30;
+  private updatePreviewBob(slotIndex: number): void {
     const bob = Math.sin(this.bobTick * 0.06) * 2;
-    portrait.y = cy + bob;
-    if (portrait.texture.key !== `portrait_${def.id}`) {
-      portrait.setTexture(`portrait_${def.id}`);
-    }
+    this.drawPreviewCard(this.slotPreviews[slotIndex], slotIndex, bob);
   }
 
   private refresh(): void {
     for (let i = 0; i < 2; i++) {
       const s = this.slots[i];
       const def = ROSTER[ALL_CHARACTERS[s.cursor]];
-      this.slotPortraits[i].setTexture(`portrait_${def.id}`);
-      this.slotPortraits[i].setAlpha(s.ready ? 1 : 0.92);
+      this.drawPreviewCard(this.slotPreviews[i], i, 0);
       this.slotNames[i].setText(def.displayName).setColor(s.ready ? '#ffe04d' : '#ffffff');
       this.slotArch[i].setText(def.archetype);
       this.slotDesc[i].setText(def.description);

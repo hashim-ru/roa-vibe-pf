@@ -2,43 +2,294 @@
   "jab": {
     "id": "jab",
     "category": "ground",
-    "totalFrames": 14,
-    "iasaFrame": 11,
+    "totalFrames": 18,
+    "iasaFrame": 14,
     "lCancelable": false,
     "landingLag": 0,
     "autoCancelBefore": null,
     "autoCancelAfter": null,
     "frames": [
-      {
-        "frame": 4,
-        "hitboxes": [
-          { "id": 0, "ox": 36, "oy": -28, "w": 44, "h": 28, "damage": 3, "baseKB": 18, "kbGrowth": 25, "angle": 80, "hitstunMul": 0.4, "priority": 1, "hitId": "lancer_jab", "sfxKey": "hit_light" }
-        ]
-      },
-      {
-        "frame": 5,
-        "hitboxes": [
-          { "id": 0, "ox": 38, "oy": -26, "w": 44, "h": 28, "damage": 3, "baseKB": 18, "kbGrowth": 25, "angle": 80, "hitstunMul": 0.4, "priority": 1, "hitId": "lancer_jab", "sfxKey": "hit_light" }
-        ]
-      }
+      { "frame": 4, "hitboxes": [{ "id": 0, "ox": 38, "oy": -28, "w": 32, "h": 22, "damage": 3, "baseKB": 18, "kbGrowth": 25, "angle": 80, "hitstunMul": 0.4, "priority": 1, "hitId": "lancer_jab", "sfxKey": "hit_light" }] },
+      { "frame": 5, "hitboxes": [{ "id": 0, "ox": 40, "oy": -28, "w": 32, "h": 22, "damage": 3, "baseKB": 18, "kbGrowth": 25, "angle": 80, "hitstunMul": 0.4, "priority": 1, "hitId": "lancer_jab", "sfxKey": "hit_light" }] }
+    ]
+  },
+  "jab2": {
+    "id": "jab2",
+    "category": "ground",
+    "totalFrames": 22,
+    "iasaFrame": 18,
+    "lCancelable": false,
+    "landingLag": 0,
+    "autoCancelBefore": null,
+    "autoCancelAfter": null,
+    "frames": [
+      { "frame": 6, "hitboxes": [{ "id": 0, "ox": 42, "oy": -28, "w": 36, "h": 24, "damage": 4, "baseKB": 22, "kbGrowth": 30, "angle": 90, "hitstunMul": 0.4, "priority": 1, "hitId": "lancer_jab2", "sfxKey": "hit_light" }] },
+      { "frame": 7, "hitboxes": [{ "id": 0, "ox": 44, "oy": -28, "w": 36, "h": 24, "damage": 4, "baseKB": 22, "kbGrowth": 30, "angle": 90, "hitstunMul": 0.4, "priority": 1, "hitId": "lancer_jab2", "sfxKey": "hit_light" }] }
+    ]
+  },
+  "ftilt": {
+    "id": "ftilt",
+    "category": "ground",
+    "totalFrames": 28,
+    "iasaFrame": 22,
+    "lCancelable": false,
+    "landingLag": 0,
+    "autoCancelBefore": null,
+    "autoCancelAfter": null,
+    "frames": [
+      { "frame": 7, "hitboxes": [
+        { "id": 0, "ox": 64, "oy": -30, "w": 26, "h": 30, "damage": 11, "baseKB": 25, "kbGrowth": 80, "angle": 361, "hitstunMul": 0.4, "priority": 3, "hitId": "lancer_ftilt_tip", "effect": "launch", "sfxKey": "hit_med" },
+        { "id": 1, "ox": 40, "oy": -30, "w": 28, "h": 30, "damage": 8, "baseKB": 22, "kbGrowth": 60, "angle": 361, "hitstunMul": 0.4, "priority": 2, "hitId": "lancer_ftilt_base", "effect": "launch", "sfxKey": "hit_light" }
+      ] },
+      { "frame": 8, "hitboxes": [
+        { "id": 0, "ox": 66, "oy": -30, "w": 26, "h": 30, "damage": 11, "baseKB": 25, "kbGrowth": 80, "angle": 361, "hitstunMul": 0.4, "priority": 3, "hitId": "lancer_ftilt_tip", "effect": "launch", "sfxKey": "hit_med" },
+        { "id": 1, "ox": 42, "oy": -30, "w": 28, "h": 30, "damage": 8, "baseKB": 22, "kbGrowth": 60, "angle": 361, "hitstunMul": 0.4, "priority": 2, "hitId": "lancer_ftilt_base", "effect": "launch", "sfxKey": "hit_light" }
+      ] }
+    ],
+    "selfMotion": [{ "frame": 7, "vx": 1.5 }]
+  },
+  "utilt": {
+    "id": "utilt",
+    "category": "ground",
+    "totalFrames": 24,
+    "iasaFrame": 20,
+    "lCancelable": false,
+    "landingLag": 0,
+    "autoCancelBefore": null,
+    "autoCancelAfter": null,
+    "frames": [
+      { "frame": 6, "hitboxes": [
+        { "id": 0, "ox": 4, "oy": -82, "w": 30, "h": 30, "damage": 12, "baseKB": 22, "kbGrowth": 80, "angle": 95, "hitstunMul": 0.4, "priority": 3, "hitId": "lancer_utilt_tip", "sfxKey": "hit_med" },
+        { "id": 1, "ox": 4, "oy": -56, "w": 36, "h": 30, "damage": 9, "baseKB": 18, "kbGrowth": 65, "angle": 100, "hitstunMul": 0.4, "priority": 2, "hitId": "lancer_utilt_base", "sfxKey": "hit_light" }
+      ] },
+      { "frame": 7, "hitboxes": [
+        { "id": 0, "ox": 4, "oy": -82, "w": 30, "h": 30, "damage": 12, "baseKB": 22, "kbGrowth": 80, "angle": 95, "hitstunMul": 0.4, "priority": 3, "hitId": "lancer_utilt_tip", "sfxKey": "hit_med" },
+        { "id": 1, "ox": 4, "oy": -56, "w": 36, "h": 30, "damage": 9, "baseKB": 18, "kbGrowth": 65, "angle": 100, "hitstunMul": 0.4, "priority": 2, "hitId": "lancer_utilt_base", "sfxKey": "hit_light" }
+      ] }
+    ]
+  },
+  "dtilt": {
+    "id": "dtilt",
+    "category": "ground",
+    "totalFrames": 20,
+    "iasaFrame": 16,
+    "lCancelable": false,
+    "landingLag": 0,
+    "autoCancelBefore": null,
+    "autoCancelAfter": null,
+    "frames": [
+      { "frame": 7, "hitboxes": [{ "id": 0, "ox": 56, "oy": -8, "w": 56, "h": 18, "damage": 7, "baseKB": 18, "kbGrowth": 50, "angle": 30, "hitstunMul": 0.4, "priority": 2, "hitId": "lancer_dtilt", "sfxKey": "hit_light" }] },
+      { "frame": 8, "hitboxes": [{ "id": 0, "ox": 58, "oy": -8, "w": 56, "h": 18, "damage": 7, "baseKB": 18, "kbGrowth": 50, "angle": 30, "hitstunMul": 0.4, "priority": 2, "hitId": "lancer_dtilt", "sfxKey": "hit_light" }] }
+    ]
+  },
+  "fsmash": {
+    "id": "fsmash",
+    "category": "ground",
+    "totalFrames": 36,
+    "iasaFrame": 30,
+    "lCancelable": false,
+    "landingLag": 0,
+    "autoCancelBefore": null,
+    "autoCancelAfter": null,
+    "frames": [
+      { "frame": 14, "hitboxes": [
+        { "id": 0, "ox": 86, "oy": -30, "w": 28, "h": 38, "damage": 20, "baseKB": 30, "kbGrowth": 105, "angle": 361, "hitstunMul": 0.4, "priority": 4, "hitId": "lancer_fsmash_tip", "effect": "launch", "sfxKey": "hit_heavy" },
+        { "id": 1, "ox": 56, "oy": -30, "w": 36, "h": 38, "damage": 14, "baseKB": 26, "kbGrowth": 85, "angle": 361, "hitstunMul": 0.4, "priority": 3, "hitId": "lancer_fsmash_base", "effect": "launch", "sfxKey": "hit_med" }
+      ] },
+      { "frame": 15, "hitboxes": [
+        { "id": 0, "ox": 88, "oy": -30, "w": 28, "h": 38, "damage": 20, "baseKB": 30, "kbGrowth": 105, "angle": 361, "hitstunMul": 0.4, "priority": 4, "hitId": "lancer_fsmash_tip", "effect": "launch", "sfxKey": "hit_heavy" },
+        { "id": 1, "ox": 58, "oy": -30, "w": 36, "h": 38, "damage": 14, "baseKB": 26, "kbGrowth": 85, "angle": 361, "hitstunMul": 0.4, "priority": 3, "hitId": "lancer_fsmash_base", "effect": "launch", "sfxKey": "hit_med" }
+      ] },
+      { "frame": 16, "hitboxes": [
+        { "id": 0, "ox": 88, "oy": -30, "w": 28, "h": 38, "damage": 20, "baseKB": 30, "kbGrowth": 105, "angle": 361, "hitstunMul": 0.4, "priority": 4, "hitId": "lancer_fsmash_tip", "effect": "launch", "sfxKey": "hit_heavy" },
+        { "id": 1, "ox": 58, "oy": -30, "w": 36, "h": 38, "damage": 14, "baseKB": 26, "kbGrowth": 85, "angle": 361, "hitstunMul": 0.4, "priority": 3, "hitId": "lancer_fsmash_base", "effect": "launch", "sfxKey": "hit_med" }
+      ] }
+    ],
+    "selfMotion": [{ "frame": 14, "vx": 3 }]
+  },
+  "usmash": {
+    "id": "usmash",
+    "category": "ground",
+    "totalFrames": 32,
+    "iasaFrame": 27,
+    "lCancelable": false,
+    "landingLag": 0,
+    "autoCancelBefore": null,
+    "autoCancelAfter": null,
+    "frames": [
+      { "frame": 13, "hitboxes": [{ "id": 0, "ox": 4, "oy": -100, "w": 50, "h": 60, "damage": 17, "baseKB": 28, "kbGrowth": 100, "angle": 95, "hitstunMul": 0.4, "priority": 4, "hitId": "lancer_usmash", "sfxKey": "hit_heavy" }] },
+      { "frame": 14, "hitboxes": [{ "id": 0, "ox": 4, "oy": -100, "w": 50, "h": 60, "damage": 17, "baseKB": 28, "kbGrowth": 100, "angle": 95, "hitstunMul": 0.4, "priority": 4, "hitId": "lancer_usmash", "sfxKey": "hit_heavy" }] }
+    ]
+  },
+  "dsmash": {
+    "id": "dsmash",
+    "category": "ground",
+    "totalFrames": 30,
+    "iasaFrame": 25,
+    "lCancelable": false,
+    "landingLag": 0,
+    "autoCancelBefore": null,
+    "autoCancelAfter": null,
+    "frames": [
+      { "frame": 5, "hitboxes": [
+        { "id": 0, "ox": 50, "oy": -10, "w": 60, "h": 22, "damage": 15, "baseKB": 28, "kbGrowth": 90, "angle": 30, "hitstunMul": 0.4, "priority": 3, "hitId": "lancer_dsmash_front", "sfxKey": "hit_heavy" }
+      ] },
+      { "frame": 12, "hitboxes": [
+        { "id": 1, "ox": -50, "oy": -10, "w": 60, "h": 22, "damage": 11, "baseKB": 24, "kbGrowth": 75, "angle": 150, "hitstunMul": 0.4, "priority": 2, "hitId": "lancer_dsmash_back", "sfxKey": "hit_med" }
+      ] }
     ]
   },
   "nair": {
     "id": "nair",
     "category": "aerial",
+    "totalFrames": 32,
+    "iasaFrame": 28,
+    "lCancelable": true,
+    "landingLag": 12,
+    "autoCancelBefore": 4,
+    "autoCancelAfter": 28,
+    "frames": [
+      { "frame": 6, "hitboxes": [{ "id": 0, "ox": 0, "oy": -32, "w": 80, "h": 70, "damage": 10, "baseKB": 16, "kbGrowth": 70, "angle": 361, "hitstunMul": 0.4, "priority": 2, "hitId": "lancer_nair_strong", "sfxKey": "hit_med" }] },
+      { "frame": 7, "hitboxes": [{ "id": 0, "ox": 0, "oy": -32, "w": 80, "h": 70, "damage": 10, "baseKB": 16, "kbGrowth": 70, "angle": 361, "hitstunMul": 0.4, "priority": 2, "hitId": "lancer_nair_strong", "sfxKey": "hit_med" }] },
+      { "frame": 9, "hitboxes": [{ "id": 0, "ox": 0, "oy": -32, "w": 76, "h": 66, "damage": 8, "baseKB": 14, "kbGrowth": 55, "angle": 361, "hitstunMul": 0.4, "priority": 2, "hitId": "lancer_nair_weak", "sfxKey": "hit_light" }] },
+      { "frame": 12, "hitboxes": [{ "id": 0, "ox": 0, "oy": -32, "w": 76, "h": 66, "damage": 8, "baseKB": 14, "kbGrowth": 55, "angle": 361, "hitstunMul": 0.4, "priority": 2, "hitId": "lancer_nair_weak", "sfxKey": "hit_light" }] },
+      { "frame": 15, "hitboxes": [{ "id": 0, "ox": 0, "oy": -32, "w": 72, "h": 62, "damage": 6, "baseKB": 12, "kbGrowth": 40, "angle": 361, "hitstunMul": 0.4, "priority": 1, "hitId": "lancer_nair_weakest", "sfxKey": "hit_light" }] }
+    ]
+  },
+  "fair": {
+    "id": "fair",
+    "category": "aerial",
+    "totalFrames": 30,
+    "iasaFrame": 25,
+    "lCancelable": true,
+    "landingLag": 14,
+    "autoCancelBefore": 4,
+    "autoCancelAfter": 29,
+    "frames": [
+      { "frame": 6, "hitboxes": [
+        { "id": 0, "ox": 56, "oy": -32, "w": 28, "h": 36, "damage": 13, "baseKB": 20, "kbGrowth": 85, "angle": 50, "hitstunMul": 0.4, "priority": 3, "hitId": "lancer_fair_tip", "sfxKey": "hit_med" },
+        { "id": 1, "ox": 32, "oy": -32, "w": 32, "h": 36, "damage": 9, "baseKB": 16, "kbGrowth": 65, "angle": 50, "hitstunMul": 0.4, "priority": 2, "hitId": "lancer_fair_base", "sfxKey": "hit_light" }
+      ] },
+      { "frame": 7, "hitboxes": [
+        { "id": 0, "ox": 58, "oy": -30, "w": 28, "h": 36, "damage": 13, "baseKB": 20, "kbGrowth": 85, "angle": 50, "hitstunMul": 0.4, "priority": 3, "hitId": "lancer_fair_tip", "sfxKey": "hit_med" },
+        { "id": 1, "ox": 34, "oy": -30, "w": 32, "h": 36, "damage": 9, "baseKB": 16, "kbGrowth": 65, "angle": 50, "hitstunMul": 0.4, "priority": 2, "hitId": "lancer_fair_base", "sfxKey": "hit_light" }
+      ] }
+    ]
+  },
+  "bair": {
+    "id": "bair",
+    "category": "aerial",
     "totalFrames": 26,
     "iasaFrame": 22,
     "lCancelable": true,
     "landingLag": 10,
-    "autoCancelBefore": 4,
+    "autoCancelBefore": 5,
     "autoCancelAfter": 22,
     "frames": [
-      {
-        "frame": 6,
-        "hitboxes": [
-          { "id": 0, "ox": 0, "oy": -32, "w": 80, "h": 70, "damage": 8, "baseKB": 16, "kbGrowth": 70, "angle": 361, "hitstunMul": 0.4, "priority": 2, "hitId": "lancer_nair", "sfxKey": "hit_med" }
-        ]
-      }
+      { "frame": 7, "hitboxes": [
+        { "id": 0, "ox": -56, "oy": -28, "w": 28, "h": 32, "damage": 14, "baseKB": 22, "kbGrowth": 95, "angle": 130, "hitstunMul": 0.4, "priority": 3, "hitId": "lancer_bair_tip", "sfxKey": "hit_heavy" },
+        { "id": 1, "ox": -34, "oy": -28, "w": 28, "h": 32, "damage": 11, "baseKB": 18, "kbGrowth": 75, "angle": 130, "hitstunMul": 0.4, "priority": 2, "hitId": "lancer_bair_base", "sfxKey": "hit_med" }
+      ] },
+      { "frame": 8, "hitboxes": [
+        { "id": 0, "ox": -58, "oy": -28, "w": 28, "h": 32, "damage": 14, "baseKB": 22, "kbGrowth": 95, "angle": 130, "hitstunMul": 0.4, "priority": 3, "hitId": "lancer_bair_tip", "sfxKey": "hit_heavy" },
+        { "id": 1, "ox": -36, "oy": -28, "w": 28, "h": 32, "damage": 11, "baseKB": 18, "kbGrowth": 75, "angle": 130, "hitstunMul": 0.4, "priority": 2, "hitId": "lancer_bair_base", "sfxKey": "hit_med" }
+      ] }
+    ]
+  },
+  "uair": {
+    "id": "uair",
+    "category": "aerial",
+    "totalFrames": 24,
+    "iasaFrame": 20,
+    "lCancelable": true,
+    "landingLag": 8,
+    "autoCancelBefore": 4,
+    "autoCancelAfter": 20,
+    "frames": [
+      { "frame": 5, "hitboxes": [{ "id": 0, "ox": 0, "oy": -84, "w": 50, "h": 50, "damage": 10, "baseKB": 14, "kbGrowth": 80, "angle": 90, "hitstunMul": 0.4, "priority": 2, "hitId": "lancer_uair", "sfxKey": "hit_med" }] },
+      { "frame": 6, "hitboxes": [{ "id": 0, "ox": 0, "oy": -84, "w": 50, "h": 50, "damage": 10, "baseKB": 14, "kbGrowth": 80, "angle": 90, "hitstunMul": 0.4, "priority": 2, "hitId": "lancer_uair", "sfxKey": "hit_med" }] }
+    ]
+  },
+  "dair": {
+    "id": "dair",
+    "category": "aerial",
+    "totalFrames": 32,
+    "iasaFrame": 27,
+    "lCancelable": true,
+    "landingLag": 16,
+    "autoCancelBefore": 5,
+    "autoCancelAfter": 27,
+    "frames": [
+      { "frame": 6, "hitboxes": [
+        { "id": 0, "ox": 4, "oy": 26, "w": 30, "h": 30, "damage": 13, "baseKB": 20, "kbGrowth": 75, "angle": 270, "hitstunMul": 0.4, "priority": 3, "hitId": "lancer_dair_spike", "effect": "spike", "sfxKey": "hit_heavy" }
+      ] },
+      { "frame": 7, "hitboxes": [
+        { "id": 0, "ox": 4, "oy": 26, "w": 30, "h": 30, "damage": 13, "baseKB": 20, "kbGrowth": 75, "angle": 270, "hitstunMul": 0.4, "priority": 3, "hitId": "lancer_dair_spike", "effect": "spike", "sfxKey": "hit_heavy" }
+      ] },
+      { "frame": 8, "hitboxes": [
+        { "id": 1, "ox": 4, "oy": 26, "w": 36, "h": 36, "damage": 9, "baseKB": 16, "kbGrowth": 60, "angle": 80, "hitstunMul": 0.4, "priority": 2, "hitId": "lancer_dair_sour", "sfxKey": "hit_light" }
+      ] }
+    ]
+  },
+  "neutralB": {
+    "id": "neutralB",
+    "category": "special",
+    "totalFrames": 32,
+    "iasaFrame": 28,
+    "lCancelable": false,
+    "landingLag": 0,
+    "autoCancelBefore": null,
+    "autoCancelAfter": null,
+    "frames": [
+      { "frame": 12, "hitboxes": [{ "id": 0, "ox": 60, "oy": -28, "w": 56, "h": 38, "damage": 13, "baseKB": 28, "kbGrowth": 80, "angle": 361, "hitstunMul": 0.4, "priority": 3, "hitId": "lancer_shieldbreaker", "sfxKey": "hit_heavy" }] },
+      { "frame": 13, "hitboxes": [{ "id": 0, "ox": 62, "oy": -28, "w": 56, "h": 38, "damage": 13, "baseKB": 28, "kbGrowth": 80, "angle": 361, "hitstunMul": 0.4, "priority": 3, "hitId": "lancer_shieldbreaker", "sfxKey": "hit_heavy" }] }
+    ]
+  },
+  "sideB": {
+    "id": "sideB",
+    "category": "ground",
+    "totalFrames": 28,
+    "iasaFrame": 24,
+    "lCancelable": false,
+    "landingLag": 0,
+    "autoCancelBefore": null,
+    "autoCancelAfter": null,
+    "frames": [
+      { "frame": 7, "hitboxes": [{ "id": 0, "ox": 56, "oy": -26, "w": 50, "h": 38, "damage": 7, "baseKB": 18, "kbGrowth": 30, "angle": 70, "hitstunMul": 0.4, "priority": 2, "hitId": "lancer_dancingblade1", "sfxKey": "hit_med" }] },
+      { "frame": 8, "hitboxes": [{ "id": 0, "ox": 58, "oy": -26, "w": 50, "h": 38, "damage": 7, "baseKB": 18, "kbGrowth": 30, "angle": 70, "hitstunMul": 0.4, "priority": 2, "hitId": "lancer_dancingblade1", "sfxKey": "hit_med" }] }
+    ]
+  },
+  "upB": {
+    "id": "upB",
+    "category": "special",
+    "totalFrames": 36,
+    "iasaFrame": 32,
+    "lCancelable": false,
+    "landingLag": 0,
+    "autoCancelBefore": null,
+    "autoCancelAfter": null,
+    "frames": [
+      { "frame": 5, "hitboxes": [{ "id": 0, "ox": 0, "oy": -50, "w": 56, "h": 80, "damage": 12, "baseKB": 22, "kbGrowth": 85, "angle": 75, "hitstunMul": 0.4, "priority": 3, "hitId": "lancer_dolphinslash", "sfxKey": "hit_med" }] },
+      { "frame": 6, "hitboxes": [{ "id": 0, "ox": 0, "oy": -60, "w": 56, "h": 80, "damage": 12, "baseKB": 22, "kbGrowth": 85, "angle": 75, "hitstunMul": 0.4, "priority": 3, "hitId": "lancer_dolphinslash", "sfxKey": "hit_med" }] },
+      { "frame": 7, "hitboxes": [{ "id": 0, "ox": 0, "oy": -70, "w": 56, "h": 80, "damage": 12, "baseKB": 22, "kbGrowth": 85, "angle": 75, "hitstunMul": 0.4, "priority": 3, "hitId": "lancer_dolphinslash", "sfxKey": "hit_med" }] }
+    ],
+    "selfMotion": [{ "frame": 4, "vy": -16 }, { "frame": 5, "vy": -14 }, { "frame": 6, "vy": -12 }],
+    "hurtboxOverrides": [{ "fromFrame": 1, "toFrame": 4, "intangible": true }]
+  },
+  "downB": {
+    "id": "downB",
+    "category": "ground",
+    "totalFrames": 32,
+    "iasaFrame": 28,
+    "lCancelable": false,
+    "landingLag": 0,
+    "autoCancelBefore": null,
+    "autoCancelAfter": null,
+    "frames": [
+      { "frame": 5, "hitboxes": [], "intangible": true },
+      { "frame": 6, "hitboxes": [], "intangible": true },
+      { "frame": 7, "hitboxes": [], "intangible": true },
+      { "frame": 10, "hitboxes": [{ "id": 0, "ox": 50, "oy": -28, "w": 70, "h": 44, "damage": 12, "baseKB": 26, "kbGrowth": 80, "angle": 50, "hitstunMul": 0.4, "priority": 3, "hitId": "lancer_counter", "sfxKey": "hit_heavy" }] }
     ]
   }
 }

@@ -9,18 +9,112 @@
     "autoCancelBefore": null,
     "autoCancelAfter": null,
     "frames": [
-      {
-        "frame": 2,
-        "hitboxes": [
-          { "id": 0, "ox": 26, "oy": -26, "w": 30, "h": 22, "damage": 2, "baseKB": 10, "kbGrowth": 18, "angle": 70, "hitstunMul": 0.35, "priority": 1, "hitId": "skirmisher_jab", "sfxKey": "hit_light" }
-        ]
-      },
-      {
-        "frame": 3,
-        "hitboxes": [
-          { "id": 0, "ox": 28, "oy": -26, "w": 30, "h": 22, "damage": 2, "baseKB": 10, "kbGrowth": 18, "angle": 70, "hitstunMul": 0.35, "priority": 1, "hitId": "skirmisher_jab", "sfxKey": "hit_light" }
-        ]
-      }
+      { "frame": 2, "hitboxes": [{ "id": 0, "ox": 26, "oy": -26, "w": 30, "h": 22, "damage": 2, "baseKB": 10, "kbGrowth": 18, "angle": 70, "hitstunMul": 0.35, "priority": 1, "hitId": "skirmisher_jab1", "sfxKey": "hit_light" }] },
+      { "frame": 3, "hitboxes": [{ "id": 0, "ox": 28, "oy": -26, "w": 30, "h": 22, "damage": 2, "baseKB": 10, "kbGrowth": 18, "angle": 70, "hitstunMul": 0.35, "priority": 1, "hitId": "skirmisher_jab1", "sfxKey": "hit_light" }] }
+    ]
+  },
+  "jab2": {
+    "id": "jab2",
+    "category": "ground",
+    "totalFrames": 11,
+    "iasaFrame": 9,
+    "lCancelable": false,
+    "landingLag": 0,
+    "autoCancelBefore": null,
+    "autoCancelAfter": null,
+    "frames": [
+      { "frame": 3, "hitboxes": [{ "id": 0, "ox": 30, "oy": -26, "w": 30, "h": 22, "damage": 1, "baseKB": 8, "kbGrowth": 15, "angle": 70, "hitstunMul": 0.35, "priority": 1, "hitId": "skirmisher_jab2", "sfxKey": "hit_light" }] }
+    ]
+  },
+  "ftilt": {
+    "id": "ftilt",
+    "category": "ground",
+    "totalFrames": 18,
+    "iasaFrame": 14,
+    "lCancelable": false,
+    "landingLag": 0,
+    "autoCancelBefore": null,
+    "autoCancelAfter": null,
+    "frames": [
+      { "frame": 5, "hitboxes": [{ "id": 0, "ox": 36, "oy": -28, "w": 38, "h": 28, "damage": 6, "baseKB": 18, "kbGrowth": 50, "angle": 30, "hitstunMul": 0.4, "priority": 2, "hitId": "skirmisher_ftilt", "sfxKey": "hit_light" }] },
+      { "frame": 6, "hitboxes": [{ "id": 0, "ox": 38, "oy": -28, "w": 38, "h": 28, "damage": 6, "baseKB": 18, "kbGrowth": 50, "angle": 30, "hitstunMul": 0.4, "priority": 2, "hitId": "skirmisher_ftilt", "sfxKey": "hit_light" }] }
+    ]
+  },
+  "utilt": {
+    "id": "utilt",
+    "category": "ground",
+    "totalFrames": 18,
+    "iasaFrame": 14,
+    "lCancelable": false,
+    "landingLag": 0,
+    "autoCancelBefore": null,
+    "autoCancelAfter": null,
+    "frames": [
+      { "frame": 5, "hitboxes": [{ "id": 0, "ox": 0, "oy": -70, "w": 44, "h": 44, "damage": 5, "baseKB": 16, "kbGrowth": 60, "angle": 110, "hitstunMul": 0.4, "priority": 2, "hitId": "skirmisher_utilt", "sfxKey": "hit_light" }] },
+      { "frame": 6, "hitboxes": [{ "id": 0, "ox": 0, "oy": -70, "w": 44, "h": 44, "damage": 5, "baseKB": 16, "kbGrowth": 60, "angle": 110, "hitstunMul": 0.4, "priority": 2, "hitId": "skirmisher_utilt", "sfxKey": "hit_light" }] }
+    ]
+  },
+  "dtilt": {
+    "id": "dtilt",
+    "category": "ground",
+    "totalFrames": 18,
+    "iasaFrame": 14,
+    "lCancelable": false,
+    "landingLag": 0,
+    "autoCancelBefore": null,
+    "autoCancelAfter": null,
+    "frames": [
+      { "frame": 7, "hitboxes": [{ "id": 0, "ox": 32, "oy": -8, "w": 44, "h": 18, "damage": 7, "baseKB": 16, "kbGrowth": 45, "angle": 80, "hitstunMul": 0.4, "priority": 2, "hitId": "skirmisher_dtilt", "sfxKey": "hit_light" }] },
+      { "frame": 8, "hitboxes": [{ "id": 0, "ox": 34, "oy": -8, "w": 44, "h": 18, "damage": 7, "baseKB": 16, "kbGrowth": 45, "angle": 80, "hitstunMul": 0.4, "priority": 2, "hitId": "skirmisher_dtilt", "sfxKey": "hit_light" }] }
+    ]
+  },
+  "fsmash": {
+    "id": "fsmash",
+    "category": "ground",
+    "totalFrames": 28,
+    "iasaFrame": 24,
+    "lCancelable": false,
+    "landingLag": 0,
+    "autoCancelBefore": null,
+    "autoCancelAfter": null,
+    "frames": [
+      { "frame": 12, "hitboxes": [{ "id": 0, "ox": 36, "oy": -28, "w": 40, "h": 30, "damage": 4, "baseKB": 12, "kbGrowth": 25, "angle": 90, "hitstunMul": 0.35, "priority": 2, "hitId": "skirmisher_fsmash_h1", "sfxKey": "hit_light" }] },
+      { "frame": 14, "hitboxes": [{ "id": 0, "ox": 38, "oy": -28, "w": 40, "h": 30, "damage": 4, "baseKB": 12, "kbGrowth": 25, "angle": 90, "hitstunMul": 0.35, "priority": 2, "hitId": "skirmisher_fsmash_h2", "sfxKey": "hit_light" }] },
+      { "frame": 17, "hitboxes": [{ "id": 0, "ox": 42, "oy": -28, "w": 44, "h": 32, "damage": 6, "baseKB": 24, "kbGrowth": 75, "angle": 361, "hitstunMul": 0.4, "priority": 3, "hitId": "skirmisher_fsmash_h3", "sfxKey": "hit_med" }] }
+    ]
+  },
+  "usmash": {
+    "id": "usmash",
+    "category": "ground",
+    "totalFrames": 30,
+    "iasaFrame": 26,
+    "lCancelable": false,
+    "landingLag": 0,
+    "autoCancelBefore": null,
+    "autoCancelAfter": null,
+    "frames": [
+      { "frame": 13, "hitboxes": [{ "id": 0, "ox": 4, "oy": -88, "w": 44, "h": 60, "damage": 14, "baseKB": 26, "kbGrowth": 95, "angle": 95, "hitstunMul": 0.4, "priority": 4, "hitId": "skirmisher_usmash", "sfxKey": "hit_heavy" }] },
+      { "frame": 14, "hitboxes": [{ "id": 0, "ox": 4, "oy": -88, "w": 44, "h": 60, "damage": 14, "baseKB": 26, "kbGrowth": 95, "angle": 95, "hitstunMul": 0.4, "priority": 4, "hitId": "skirmisher_usmash", "sfxKey": "hit_heavy" }] }
+    ]
+  },
+  "dsmash": {
+    "id": "dsmash",
+    "category": "ground",
+    "totalFrames": 22,
+    "iasaFrame": 18,
+    "lCancelable": false,
+    "landingLag": 0,
+    "autoCancelBefore": null,
+    "autoCancelAfter": null,
+    "frames": [
+      { "frame": 5, "hitboxes": [
+        { "id": 0, "ox": 36, "oy": -8, "w": 44, "h": 22, "damage": 8, "baseKB": 22, "kbGrowth": 65, "angle": 30, "hitstunMul": 0.4, "priority": 3, "hitId": "skirmisher_dsmash_front", "sfxKey": "hit_med" },
+        { "id": 1, "ox": -36, "oy": -8, "w": 44, "h": 22, "damage": 8, "baseKB": 22, "kbGrowth": 65, "angle": 150, "hitstunMul": 0.4, "priority": 3, "hitId": "skirmisher_dsmash_back", "sfxKey": "hit_med" }
+      ] },
+      { "frame": 6, "hitboxes": [
+        { "id": 0, "ox": 36, "oy": -8, "w": 44, "h": 22, "damage": 8, "baseKB": 22, "kbGrowth": 65, "angle": 30, "hitstunMul": 0.4, "priority": 3, "hitId": "skirmisher_dsmash_front", "sfxKey": "hit_med" },
+        { "id": 1, "ox": -36, "oy": -8, "w": 44, "h": 22, "damage": 8, "baseKB": 22, "kbGrowth": 65, "angle": 150, "hitstunMul": 0.4, "priority": 3, "hitId": "skirmisher_dsmash_back", "sfxKey": "hit_med" }
+      ] }
     ]
   },
   "nair": {
@@ -33,24 +127,140 @@
     "autoCancelBefore": 3,
     "autoCancelAfter": 18,
     "frames": [
-      {
-        "frame": 3,
-        "hitboxes": [
-          { "id": 0, "ox": 0, "oy": -28, "w": 60, "h": 56, "damage": 7, "baseKB": 12, "kbGrowth": 50, "angle": 361, "hitstunMul": 0.4, "priority": 2, "hitId": "skirmisher_nair_strong", "sfxKey": "hit_med" }
-        ]
-      },
-      {
-        "frame": 8,
-        "hitboxes": [
-          { "id": 0, "ox": 0, "oy": -28, "w": 60, "h": 56, "damage": 5, "baseKB": 8, "kbGrowth": 35, "angle": 361, "hitstunMul": 0.4, "priority": 1, "hitId": "skirmisher_nair_weak", "sfxKey": "hit_light" }
-        ]
-      },
-      {
-        "frame": 12,
-        "hitboxes": [
-          { "id": 0, "ox": 0, "oy": -28, "w": 60, "h": 56, "damage": 5, "baseKB": 8, "kbGrowth": 35, "angle": 361, "hitstunMul": 0.4, "priority": 1, "hitId": "skirmisher_nair_weak", "sfxKey": "hit_light" }
-        ]
-      }
+      { "frame": 3, "hitboxes": [{ "id": 0, "ox": 0, "oy": -28, "w": 60, "h": 56, "damage": 9, "baseKB": 14, "kbGrowth": 60, "angle": 361, "hitstunMul": 0.4, "priority": 2, "hitId": "skirmisher_nair_strong", "sfxKey": "hit_med" }] },
+      { "frame": 4, "hitboxes": [{ "id": 0, "ox": 0, "oy": -28, "w": 60, "h": 56, "damage": 9, "baseKB": 14, "kbGrowth": 60, "angle": 361, "hitstunMul": 0.4, "priority": 2, "hitId": "skirmisher_nair_strong", "sfxKey": "hit_med" }] },
+      { "frame": 7, "hitboxes": [{ "id": 0, "ox": 0, "oy": -28, "w": 56, "h": 52, "damage": 6, "baseKB": 10, "kbGrowth": 40, "angle": 361, "hitstunMul": 0.4, "priority": 1, "hitId": "skirmisher_nair_weak", "sfxKey": "hit_light" }] },
+      { "frame": 11, "hitboxes": [{ "id": 0, "ox": 0, "oy": -28, "w": 56, "h": 52, "damage": 5, "baseKB": 8, "kbGrowth": 35, "angle": 361, "hitstunMul": 0.4, "priority": 1, "hitId": "skirmisher_nair_weak", "sfxKey": "hit_light" }] }
     ]
+  },
+  "fair": {
+    "id": "fair",
+    "category": "aerial",
+    "totalFrames": 22,
+    "iasaFrame": 18,
+    "lCancelable": true,
+    "landingLag": 7,
+    "autoCancelBefore": 4,
+    "autoCancelAfter": 18,
+    "frames": [
+      { "frame": 4, "hitboxes": [{ "id": 0, "ox": 38, "oy": -28, "w": 36, "h": 30, "damage": 5, "baseKB": 14, "kbGrowth": 28, "angle": 60, "hitstunMul": 0.35, "priority": 2, "hitId": "skirmisher_fair", "sfxKey": "hit_light" }] },
+      { "frame": 5, "hitboxes": [{ "id": 0, "ox": 40, "oy": -28, "w": 36, "h": 30, "damage": 5, "baseKB": 14, "kbGrowth": 28, "angle": 60, "hitstunMul": 0.35, "priority": 2, "hitId": "skirmisher_fair", "sfxKey": "hit_light" }] }
+    ]
+  },
+  "bair": {
+    "id": "bair",
+    "category": "aerial",
+    "totalFrames": 22,
+    "iasaFrame": 18,
+    "lCancelable": true,
+    "landingLag": 8,
+    "autoCancelBefore": 4,
+    "autoCancelAfter": 18,
+    "frames": [
+      { "frame": 4, "hitboxes": [{ "id": 0, "ox": -38, "oy": -28, "w": 36, "h": 30, "damage": 8, "baseKB": 18, "kbGrowth": 70, "angle": 130, "hitstunMul": 0.4, "priority": 3, "hitId": "skirmisher_bair", "sfxKey": "hit_med" }] },
+      { "frame": 5, "hitboxes": [{ "id": 0, "ox": -40, "oy": -28, "w": 36, "h": 30, "damage": 8, "baseKB": 18, "kbGrowth": 70, "angle": 130, "hitstunMul": 0.4, "priority": 3, "hitId": "skirmisher_bair", "sfxKey": "hit_med" }] }
+    ]
+  },
+  "uair": {
+    "id": "uair",
+    "category": "aerial",
+    "totalFrames": 22,
+    "iasaFrame": 18,
+    "lCancelable": true,
+    "landingLag": 8,
+    "autoCancelBefore": 4,
+    "autoCancelAfter": 18,
+    "frames": [
+      { "frame": 5, "hitboxes": [{ "id": 0, "ox": 0, "oy": -76, "w": 50, "h": 44, "damage": 6, "baseKB": 12, "kbGrowth": 70, "angle": 90, "hitstunMul": 0.4, "priority": 2, "hitId": "skirmisher_uair", "sfxKey": "hit_med" }] },
+      { "frame": 6, "hitboxes": [{ "id": 0, "ox": 0, "oy": -76, "w": 50, "h": 44, "damage": 6, "baseKB": 12, "kbGrowth": 70, "angle": 90, "hitstunMul": 0.4, "priority": 2, "hitId": "skirmisher_uair", "sfxKey": "hit_med" }] }
+    ]
+  },
+  "dair": {
+    "id": "dair",
+    "category": "aerial",
+    "totalFrames": 32,
+    "iasaFrame": 28,
+    "lCancelable": true,
+    "landingLag": 12,
+    "autoCancelBefore": 6,
+    "autoCancelAfter": 28,
+    "frames": [
+      { "frame": 16, "hitboxes": [{ "id": 0, "ox": 4, "oy": 24, "w": 36, "h": 32, "damage": 4, "baseKB": 8, "kbGrowth": 25, "angle": 270, "hitstunMul": 0.35, "priority": 2, "hitId": "skirmisher_dair_drill", "sfxKey": "hit_light" }] },
+      { "frame": 18, "hitboxes": [{ "id": 0, "ox": 4, "oy": 24, "w": 36, "h": 32, "damage": 4, "baseKB": 8, "kbGrowth": 25, "angle": 270, "hitstunMul": 0.35, "priority": 2, "hitId": "skirmisher_dair_drill", "sfxKey": "hit_light" }] },
+      { "frame": 20, "hitboxes": [{ "id": 0, "ox": 4, "oy": 24, "w": 36, "h": 32, "damage": 3, "baseKB": 8, "kbGrowth": 25, "angle": 270, "hitstunMul": 0.35, "priority": 2, "hitId": "skirmisher_dair_drill", "sfxKey": "hit_light" }] },
+      { "frame": 22, "hitboxes": [{ "id": 0, "ox": 4, "oy": 24, "w": 36, "h": 32, "damage": 3, "baseKB": 22, "kbGrowth": 75, "angle": 270, "hitstunMul": 0.4, "priority": 3, "hitId": "skirmisher_dair_finisher", "effect": "spike", "sfxKey": "hit_heavy" }] }
+    ]
+  },
+  "neutralB": {
+    "id": "neutralB",
+    "category": "special",
+    "totalFrames": 24,
+    "iasaFrame": 20,
+    "lCancelable": false,
+    "landingLag": 0,
+    "autoCancelBefore": null,
+    "autoCancelAfter": null,
+    "frames": [
+      { "frame": 12, "hitboxes": [{ "id": 0, "ox": 36, "oy": -26, "w": 28, "h": 16, "damage": 2, "baseKB": 8, "kbGrowth": 15, "angle": 75, "hitstunMul": 0.3, "priority": 1, "hitId": "skirmisher_needle1", "sfxKey": "hit_light" }] },
+      { "frame": 13, "hitboxes": [{ "id": 0, "ox": 38, "oy": -26, "w": 28, "h": 16, "damage": 2, "baseKB": 8, "kbGrowth": 15, "angle": 75, "hitstunMul": 0.3, "priority": 1, "hitId": "skirmisher_needle1", "sfxKey": "hit_light" }] }
+    ],
+    "selfMotion": [{ "frame": 1, "vx": 0 }]
+  },
+  "sideB": {
+    "id": "sideB",
+    "category": "special",
+    "totalFrames": 36,
+    "iasaFrame": 32,
+    "lCancelable": false,
+    "landingLag": 0,
+    "autoCancelBefore": null,
+    "autoCancelAfter": null,
+    "frames": [
+      { "frame": 12, "hitboxes": [
+        { "id": 0, "ox": 60, "oy": -22, "w": 80, "h": 18, "damage": 1, "baseKB": 6, "kbGrowth": 15, "angle": 75, "hitstunMul": 0.3, "priority": 1, "hitId": "skirmisher_chain1", "sfxKey": "hit_light" }
+      ] },
+      { "frame": 16, "hitboxes": [
+        { "id": 0, "ox": 80, "oy": -22, "w": 80, "h": 18, "damage": 1, "baseKB": 6, "kbGrowth": 15, "angle": 75, "hitstunMul": 0.3, "priority": 1, "hitId": "skirmisher_chain2", "sfxKey": "hit_light" }
+      ] },
+      { "frame": 20, "hitboxes": [
+        { "id": 0, "ox": 100, "oy": -22, "w": 80, "h": 18, "damage": 2, "baseKB": 14, "kbGrowth": 35, "angle": 75, "hitstunMul": 0.35, "priority": 2, "hitId": "skirmisher_chain3", "sfxKey": "hit_med" }
+      ] }
+    ]
+  },
+  "upB": {
+    "id": "upB",
+    "category": "special",
+    "totalFrames": 36,
+    "iasaFrame": 32,
+    "lCancelable": false,
+    "landingLag": 0,
+    "autoCancelBefore": null,
+    "autoCancelAfter": null,
+    "frames": [
+      { "frame": 6, "hitboxes": [], "intangible": true },
+      { "frame": 12, "hitboxes": [], "intangible": true },
+      { "frame": 18, "hitboxes": [], "intangible": true },
+      { "frame": 24, "hitboxes": [{ "id": 0, "ox": 0, "oy": -32, "w": 80, "h": 80, "damage": 12, "baseKB": 26, "kbGrowth": 90, "angle": 60, "hitstunMul": 0.4, "priority": 4, "hitId": "skirmisher_vanish", "sfxKey": "hit_heavy" }] }
+    ],
+    "selfMotion": [
+      { "frame": 5, "vy": -8 },
+      { "frame": 6, "vy": -16 },
+      { "frame": 18, "vy": -10 }
+    ],
+    "hurtboxOverrides": [{ "fromFrame": 6, "toFrame": 23, "intangible": true }]
+  },
+  "downB": {
+    "id": "downB",
+    "category": "ground",
+    "totalFrames": 30,
+    "iasaFrame": 26,
+    "lCancelable": false,
+    "landingLag": 0,
+    "autoCancelBefore": null,
+    "autoCancelAfter": null,
+    "frames": [
+      { "frame": 18, "hitboxes": [{ "id": 0, "ox": 60, "oy": -22, "w": 60, "h": 60, "damage": 8, "baseKB": 22, "kbGrowth": 70, "angle": 80, "hitstunMul": 0.4, "priority": 3, "hitId": "skirmisher_grenade", "sfxKey": "hit_heavy" }] }
+    ],
+    "selfMotion": [{ "frame": 8, "vx": 2 }]
   }
 }
