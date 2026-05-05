@@ -1,0 +1,14 @@
+node_modules
+dist
+.DS_Store
+*.log
+.vite
+public/assets/raw/
+
+# Playwright + dev screenshots (top-level)
+.playwright-mcp/
+*.png
+!public/assets/portraits/*.png
+
+# Local plan/research artifacts
+/tmp/feel-*.md

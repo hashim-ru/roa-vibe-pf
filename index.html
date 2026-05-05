@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ROA Vibe PF</title>
+    <style>
+      :root { color-scheme: dark; }
+      html, body { margin: 0; padding: 0; background: #0a0a14; color: #cfd0d6; font-family: system-ui, sans-serif; height: 100%; overflow: hidden; }
+      body { display: flex; align-items: center; justify-content: center; }
+      #game { image-rendering: pixelated; image-rendering: crisp-edges; }
+      #fps { position: fixed; top: 6px; left: 8px; font-family: ui-monospace, monospace; font-size: 12px; opacity: 0.6; pointer-events: none; }
+    </style>
+  </head>
+  <body>
+    <div id="game"></div>
+    <div id="fps"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
