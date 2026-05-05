@@ -272,6 +272,14 @@ export class MatchScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-ESC', () => {
       this.scene.start('Title');
     });
+    // Pause overlay — launches PauseScene on top while suspending the
+    // match's input/simulate loop. P resumes (or ESC inside Pause).
+    // launch BEFORE pause so the pause scene's create() runs while the
+    // match's input is still alive (otherwise the launch never wires).
+    this.input.keyboard?.on('keydown-P', () => {
+      this.scene.launch('Pause');
+      this.scene.pause();
+    });
 
     // Stop the per-stage ambient drone whenever the scene shuts down
     // (rematch via R, ESC to title, or scene swap from a future menu).

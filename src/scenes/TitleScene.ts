@@ -68,7 +68,7 @@ export class TitleScene extends Phaser.Scene {
       'P1   move WASD · jump SPACE · attack F · special G · parry H · smash LSHIFT+attack',
       'P2   move ←→↑↓ · jump RSHIFT · attack / · special . · parry RCTRL · smash NUM0+attack',
       'tech wavedash (parry mid-air with stick)  · L-cancel (attack just before landing)  · ledge auto-grab',
-      'F1 toggles debug hitboxes · R restarts a finished match'
+      'F1 toggles debug hitboxes · P pauses (volume + restart menu) · R restarts a finished match'
     ];
     controls.forEach((line, i) =>
       this.add
