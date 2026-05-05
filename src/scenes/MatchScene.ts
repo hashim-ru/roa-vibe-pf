@@ -87,6 +87,11 @@ export class MatchScene extends Phaser.Scene {
     const world = stageDef.build();
     new StageRenderer(this, world, stageDef.theme);
 
+    // Per-stage ambient pad — Battlefield = warm forest hum (low A2,
+    // 110Hz), Final Destination = cold mountain whistle (mid E3,
+    // 165Hz). Procedural sine drone, no melody — halal-relaxed.
+    audio.startAmbient('stage', cfg.stage === 'final-destination' ? 165 : 110, 0.18);
+
     const buf1 = new InputBuffer();
     const buf2 = new InputBuffer();
     const dev1 = new KeyboardDevice(0, P1_KEYS);
@@ -267,6 +272,10 @@ export class MatchScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-ESC', () => {
       this.scene.start('Title');
     });
+
+    // Stop the per-stage ambient drone whenever the scene shuts down
+    // (rematch via R, ESC to title, or scene swap from a future menu).
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => audio.stopAmbient('stage'));
 
     frameClock.reset();
   }

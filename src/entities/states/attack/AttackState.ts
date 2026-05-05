@@ -5,6 +5,7 @@ import {
   canCancel,
   lCanceled
 } from '../../MoveCancel';
+import { audio } from '../../../audio/AudioManager';
 
 /**
  * Generic frame-data runner. The attack to play is decided BEFORE entering
@@ -25,6 +26,16 @@ export class AttackState extends State<Fighter> {
       if (fallback) f.startMove(fallback, tick);
     }
     f.applyMoveMotion(0);
+    // Procedural whoosh — pitch scaled by the move's hitbox damage so
+    // heavy attacks sound heavier than jabs without needing per-move
+    // recorded swing samples.
+    const move = f.pendingMove?.move;
+    if (move) {
+      const firstHit = move.frames.find((fr) => fr.hitboxes.length > 0)?.hitboxes[0];
+      const dmg = firstHit?.damage ?? 4;
+      const weight = Math.min(1, dmg / 16);
+      audio.whoosh(weight);
+    }
   }
 
   onUpdate(f: Fighter, tick: number): string | null {
