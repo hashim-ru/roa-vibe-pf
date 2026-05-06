@@ -9,7 +9,15 @@ import { ActiveHitbox, buildWorldHitbox } from '../combat/Hitbox';
 import { bus } from '../core/EventBus';
 
 export type Hurtbox = {
-  state: 'normal' | 'invincible' | 'intangible';
+  /**
+   * - `normal`: hits land as usual.
+   * - `invincible`: hits are blocked entirely (no damage, no shield drain).
+   * - `intangible`: hits don't register at all (no clank, no event).
+   * - `shield`: hits are absorbed into `shieldHP` instead of percent;
+   *   pushback applies, no launch, no hitstun. Triggers ShieldBreak
+   *   if HP depletes from the absorbed damage.
+   */
+  state: 'normal' | 'invincible' | 'intangible' | 'shield';
 };
 
 export interface PendingMove {

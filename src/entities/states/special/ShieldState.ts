@@ -26,7 +26,10 @@ export class ShieldState extends State<Fighter> {
 
   onEnter(f: Fighter, _prev: string | null, _tick: number): void {
     f.body.vx = 0;
-    f.hurtbox.state = 'invincible';
+    // Shield absorbs damage into `shieldHP` rather than blocking outright;
+    // HitDetection routes hits at this hurtbox state to drain HP + apply
+    // pushback only.
+    f.hurtbox.state = 'shield';
   }
 
   onUpdate(f: Fighter, tick: number): string | null {

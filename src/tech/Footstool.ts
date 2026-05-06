@@ -22,7 +22,7 @@ const VERT_TOLERANCE = 14;
  * the way Smash gives it back), victim is shoved downward and briefly
  * stunned. No damage.
  */
-export function processFootstool(fighters: Fighter[]): void {
+export function processFootstool(fighters: Fighter[], tick: number): void {
   for (const a of fighters) {
     if (a.body.grounded) continue;
     if (a.body.vy < 0) continue;
@@ -45,7 +45,7 @@ export function processFootstool(fighters: Fighter[]): void {
       b.body.vy = VICTIM_DOWNWARD;
       // Brief stun for the victim — 12f hitstun-equivalent so they can't
       // immediately reset out of the disadvantage.
-      b.enterHitstun(12, 0, 0);
+      b.enterHitstun(12, tick, 0);
       bus.emit('footstool', { stomperId: a.playerIndex, victimId: b.playerIndex });
       break;
     }

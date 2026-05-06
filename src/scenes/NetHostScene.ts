@@ -134,11 +134,16 @@ export class NetHostScene extends Phaser.Scene {
   private startMatch(): void {
     if (!this.guestReady) return;
     const cfg = gameMode.get();
+    // Roll the shared seed once and use the SAME value for the local
+    // GameMode and the wire message — otherwise host + guest seed their
+    // PRNGs from different sources and any future RNG-driven gameplay
+    // (replays, randomized stage hazards, etc) would silently desync.
+    const seed = Math.floor(Math.random() * 0xffffffff) >>> 0;
     netClient.send({
       t: 'config',
       chars: cfg.characters,
       stage: cfg.stage,
-      seed: Math.floor(Math.random() * 0xffffffff) >>> 0,
+      seed,
       inputDelay: DEFAULT_INPUT_DELAY
     });
     netClient.send({ t: 'start', startTick: 0 });
@@ -148,7 +153,7 @@ export class NetHostScene extends Phaser.Scene {
         localPlayerIndex: 0,
         inputDelay: DEFAULT_INPUT_DELAY,
         startTick: 0,
-        seed: Date.now() >>> 0
+        seed
       }
     });
     this.scene.start('Match');

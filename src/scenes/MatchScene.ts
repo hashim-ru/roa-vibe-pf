@@ -438,7 +438,7 @@ export class MatchScene extends Phaser.Scene {
     // Multi-fighter tech passes that need awareness of all fighters at
     // once — footstool jumps + ledge-trumps. Run before hitDetection so
     // a footstool stomp doesn't get clobbered by an in-flight hitbox.
-    processFootstool(this.fighters);
+    processFootstool(this.fighters, tick);
     processLedgeTrump(this.fighters, tick);
     hitDetection.run(this.fighters, tick);
 
@@ -448,9 +448,10 @@ export class MatchScene extends Phaser.Scene {
   }
 
   private computeStateHash(): number {
-    // Cheap rolling hash over gameplay-affecting fields. Position +
-    // velocity + percent + FSM state + hitstun + facing. Enough to flag
-    // any meaningful divergence without serializing the whole world.
+    // Cheap rolling hash over gameplay-affecting fields. Position,
+    // velocity, percent, FSM state, hitstun, facing, plus the shield /
+    // grab fields added in Phase 9 so divergence in those subsystems
+    // also lights up the desync warning.
     let h = 0x811c9dc5 | 0;
     for (const f of this.fighters) {
       h = mix(h, Math.round(f.body.x * 100));
@@ -460,7 +461,13 @@ export class MatchScene extends Phaser.Scene {
       h = mix(h, Math.round(f.percent * 10));
       h = mix(h, f.facing);
       h = mix(h, f.hitstunRemaining);
+      h = mix(h, Math.round(f.shieldHP * 10));
+      h = mix(h, f.grabbedBy);
+      h = mix(h, f.grabUntilTick);
+      h = mix(h, f.grabbedUntilTick);
+      h = mix(h, f.tumbling ? 1 : 0);
       h = mix(h, hashString(f.fsm.id ?? ''));
+      h = mix(h, hashString(f.hurtbox.state));
     }
     return h >>> 0;
   }

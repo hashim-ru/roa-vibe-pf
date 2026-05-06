@@ -104,6 +104,26 @@ export class HitDetection {
       return;
     }
 
+    // Shielded victim absorbs damage into shieldHP instead of percent.
+    // Pushback applies to both fighters (so spaced hits aren't a free
+    // pressure reset), but no launch, no hitstun, no stale-queue entry.
+    // We deliberately do *not* emit a 'hit' event so the combo counter
+    // doesn't tick on shield bumps and audio doesn't play the launch SFX.
+    // If shieldHP drops to 0 the next ShieldState tick transitions to
+    // ShieldBreak on its own threshold check.
+    if (victim.hurtbox.state === 'shield') {
+      attacker.markHit(victim.playerIndex, data.hitId);
+      victim.shieldHP = Math.max(0, victim.shieldHP - data.damage * 1.2);
+      const facing = (attacker.body.x <= victim.body.x ? 1 : -1) as 1 | -1;
+      const push = Math.min(6, data.damage * 0.25);
+      victim.body.vx = facing * push;
+      attacker.body.vx -= facing * push * 0.5;
+      const shieldPause = hitPauseFrames(data.damage);
+      hitPause.freeze(attacker, shieldPause, tick);
+      hitPause.freeze(victim, shieldPause, tick);
+      return;
+    }
+
     attacker.markHit(victim.playerIndex, data.hitId);
 
     // Stale-move scaling — last 9 hits are tracked, repeated move IDs lose

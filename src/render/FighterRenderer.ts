@@ -249,6 +249,22 @@ export class FighterRenderer {
       g.lineStyle(2, 0x9ae0ff, 0.9);
       g.strokeRect(dims.x - 3, dims.y - 3, dims.w + 6, dims.h + 6);
     }
+    if (f.fsm.is('Shield')) {
+      // Shield bubble — radius scales with remaining shieldHP so a low
+      // shield reads as small + dim before it breaks.
+      const hpFrac = Math.max(0, Math.min(1, f.shieldHP / 100));
+      const radius = 22 + hpFrac * 18;
+      const tint = hpFrac > 0.55 ? 0x9ae0ff : hpFrac > 0.25 ? 0xffd34d : 0xff7755;
+      g.fillStyle(tint, 0.20);
+      g.fillCircle(0, -f.body.h * 0.5, radius);
+      g.lineStyle(2, tint, 0.85);
+      g.strokeCircle(0, -f.body.h * 0.5, radius);
+    }
+    if (f.fsm.is('ShieldBreak')) {
+      const dims = this.silhouetteRect(transforms);
+      g.lineStyle(3, 0xff5050, 0.9);
+      g.strokeRect(dims.x - 4, dims.y - 4, dims.w + 8, dims.h + 8);
+    }
 
     g.restore();
 
