@@ -11,6 +11,11 @@ export type GameEvents = {
   doubleJump: { fighterId: number };
   land: { fighterId: number; speed: number };
   dash: { fighterId: number };
+  footstool: { stomperId: number; victimId: number };
+  ledgeTrump: { trumperId: number; victimId: number };
+  shieldBreak: { fighterId: number };
+  grab: { attackerId: number; victimId: number };
+  throw: { attackerId: number; victimId: number; direction: 'forward' | 'back' | 'up' | 'down' };
 };
 
 export const bus: Emitter<GameEvents> = mitt<GameEvents>();

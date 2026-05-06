@@ -9,6 +9,8 @@ interface ComboState {
   victimId: number;
   /** True if combo broke before reaching 3+ hits (no UI shown). */
   broken: boolean;
+  /** Tick the count last increased — used to drive the +1 punch tween. */
+  punchedAtTick: number;
 }
 
 const COMBO_TIMEOUT_FRAMES = 45; // 0.75s at 60Hz; if no new hit lands, combo expires
@@ -22,6 +24,9 @@ export class HUD {
   private combos = new Map<number, ComboState>();
   /** Current frame tick — set externally each draw(). */
   private currentTick = 0;
+  /** Last move-name shown per slot, to detect change for the fade-in tween. */
+  private lastMoveLabels: string[] = ['', ''];
+  private moveLabelChangedAt: number[] = [-999, -999];
   readonly objects: Phaser.GameObjects.GameObject[] = [];
 
   constructor(private scene: Phaser.Scene) {
@@ -83,12 +88,14 @@ export class HUD {
     if (existing && existing.victimId === victimId && this.currentTick < existing.expiresAtTick) {
       existing.count += 1;
       existing.expiresAtTick = this.currentTick + COMBO_TIMEOUT_FRAMES;
+      existing.punchedAtTick = this.currentTick;
     } else {
       this.combos.set(attackerId, {
         count: 1,
         expiresAtTick: this.currentTick + COMBO_TIMEOUT_FRAMES,
         victimId,
-        broken: false
+        broken: false,
+        punchedAtTick: this.currentTick
       });
     }
   }
@@ -120,15 +127,21 @@ export class HUD {
         }
       }
 
-      // Stale-move indicator — 9 dots showing recent hit IDs. Filled = move
-      // appears in queue, hollow = empty slot. Reads as "use other moves
-      // before re-spamming this one".
+      // Stale-move indicator — 9 dots, color-graded by how stale the
+      // freshest move at each slot is. Newest entries get the bright
+      // attacker tint, older positions fade and shift toward red so a
+      // glance tells you "stop spamming the same move".
       const dotY = baseY + 6;
       const dotX = x + 80;
+      const queueCount = f.staleQueue.length;
       for (let k = 0; k < 9; k++) {
-        const filled = k < f.staleQueue.length;
+        const filled = k < queueCount;
         if (filled) {
-          this.bars.fillStyle(colorTop, 0.55).fillCircle(dotX + k * 8, dotY, 2.5);
+          // 0 = newest (right side of indicator), 8 = oldest.
+          const ageNorm = k / Math.max(1, queueCount - 1);
+          const color = ageNorm < 0.33 ? 0x9aff9a : ageNorm < 0.66 ? 0xffd34d : 0xff7755;
+          const alpha = 0.55 + 0.35 * (1 - ageNorm);
+          this.bars.fillStyle(color, alpha).fillCircle(dotX + k * 8, dotY, 3);
         } else {
           this.bars.lineStyle(1, 0x4a5566, 0.7).strokeCircle(dotX + k * 8, dotY, 2.5);
         }
@@ -145,12 +158,20 @@ export class HUD {
       t.setColor(color);
       t.setText(`${pct}%`);
 
-      // Move name overlay
+      // Move name overlay — fade-in + small slide-up on change.
       const mn = this.moveNameTexts[i];
       const moveLabel =
         f.fsm.is('Attack') && f.pendingMove ? f.pendingMove.move.id : f.fsm.id ?? '';
-      mn.setPosition(x + colW - 110, baseY + 36);
-      mn.setText(moveLabel);
+      if (moveLabel !== this.lastMoveLabels[i]) {
+        this.lastMoveLabels[i] = moveLabel;
+        this.moveLabelChangedAt[i] = this.currentTick;
+        mn.setText(moveLabel);
+      }
+      const sinceChange = this.currentTick - this.moveLabelChangedAt[i];
+      const fadeIn = Math.min(1, sinceChange / 8);
+      mn.setAlpha(fadeIn);
+      const slideOffset = (1 - fadeIn) * 6;
+      mn.setPosition(x + colW - 110, baseY + 36 + slideOffset);
 
       // Combo counter — anchor near attacker side
       const ct = this.comboTexts[i];
@@ -160,17 +181,26 @@ export class HUD {
         const fade = Math.min(1, remaining / 20);
         ct.setVisible(true);
         ct.setText(`${combo.count} HIT${combo.count > 1 ? 'S' : ''}`);
-        // Tint shifts from green (fresh) → yellow → red as window closes.
-        const c =
-          fade > 0.6 ? '#9aff9a' : fade > 0.3 ? '#ffd34d' : '#ff7755';
-        ct.setColor(c);
+        // Tier color: 1-3 white-ish, 4-6 yellow, 7-9 orange, 10+ red.
+        // Expiry fade darkens the tier color toward red on timeout.
+        let baseColor: string;
+        if (combo.count >= 10) baseColor = '#ff4f6a';
+        else if (combo.count >= 7) baseColor = '#ff7755';
+        else if (combo.count >= 4) baseColor = '#ffd34d';
+        else baseColor = '#e6f5ff';
+        ct.setColor(fade > 0.3 ? baseColor : '#ff7755');
         // Centered at top of attacker's screen half.
         const ax = i === 0 ? GAME_WIDTH * 0.25 : GAME_WIDTH * 0.75;
-        const sizeBoost = combo.count >= 10 ? 50 : combo.count >= 5 ? 44 : 38;
+        const sizeBoost = combo.count >= 10 ? 56 : combo.count >= 7 ? 50 : combo.count >= 4 ? 44 : 38;
         ct.setFontSize(sizeBoost);
         ct.setPosition(ax, 110);
+        // +1 punch — scale up briefly when the count just bumped.
+        const sincePunch = this.currentTick - combo.punchedAtTick;
+        const punch = sincePunch < 8 ? 1 + (1 - sincePunch / 8) * 0.35 : 1;
+        ct.setScale(punch);
       } else {
         ct.setVisible(false);
+        ct.setScale(1);
         if (combo && this.currentTick >= combo.expiresAtTick) this.combos.delete(i);
       }
     });

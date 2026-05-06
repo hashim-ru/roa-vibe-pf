@@ -22,6 +22,9 @@ interface DifficultyProfile {
   recoveryUseUpB: boolean;  // use up-B to recover from offstage
   diSkill: number;          // 0..1, how well it DIs hits
   jitter: number;           // random movement noise
+  /** 0..1 — chance to chain a follow-up hit while opponent is still in
+   *  hitstun. Higher tiers extend strings into uair-juggles + edge-guards. */
+  comboAggression: number;
 }
 
 const PROFILES: Record<Difficulty, DifficultyProfile> = {
@@ -37,7 +40,8 @@ const PROFILES: Record<Difficulty, DifficultyProfile> = {
     edgeAvoid: false,
     recoveryUseUpB: false,
     diSkill: 0,
-    jitter: 0.4
+    jitter: 0.4,
+    comboAggression: 0.1
   },
   medium: {
     reactionFrames: 8,
@@ -51,7 +55,8 @@ const PROFILES: Record<Difficulty, DifficultyProfile> = {
     edgeAvoid: true,
     recoveryUseUpB: true,
     diSkill: 0.5,
-    jitter: 0.15
+    jitter: 0.15,
+    comboAggression: 0.45
   },
   hard: {
     reactionFrames: 3,
@@ -65,7 +70,8 @@ const PROFILES: Record<Difficulty, DifficultyProfile> = {
     edgeAvoid: true,
     recoveryUseUpB: true,
     diSkill: 0.95,
-    jitter: 0
+    jitter: 0,
+    comboAggression: 0.85
   }
 };
 
@@ -170,6 +176,32 @@ export class BotController {
     ) {
       s.parry = this.justInputEdge(tick, 'parry');
       s.stickY = 1;
+      return s;
+    }
+
+    // === Combo follow-up — chase while opp is still in hitstun ===
+    // The decision-tick gate gets bypassed here so the bot doesn't drop
+    // confirms on long intervals at low difficulty. Move selection is
+    // posture-based: opp above → up-tilt/uair, opp below → dair/dtilt,
+    // level → jab/ftilt. Stale-move queue + stick magnitude do the rest.
+    const oppInHitstun = opp.fsm.is('Hitstun');
+    const inComboRange = dist < this.profile.attackRange + 24;
+    const oppLowPct = opp.percent < 70;
+    if (
+      oppInHitstun &&
+      oppLowPct &&
+      inComboRange &&
+      rand() < this.profile.comboAggression
+    ) {
+      const oppDy = opp.body.y - me.body.y;
+      s.stickX = facing * 0.6;
+      s.attack = this.justInputEdge(tick, 'attack');
+      if (oppDy < -30) s.stickY = -0.8;
+      else if (oppDy > 40) s.stickY = 0.7;
+      // High-skill: occasionally smash on combo finisher when opp percent
+      // is in launch range (>50%) — mimics the human "kill confirm" read.
+      if (opp.percent > 50 && rand() < this.profile.smashChance * 0.6) s.smashMod = true;
+      me.facing = facing;
       return s;
     }
 

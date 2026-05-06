@@ -180,7 +180,16 @@ export class FighterRenderer {
       if (speed > 8) tumble = (tick * f.body.vx * 0.04) * 0.5;
     }
     // Discrete state squash — jumpsquat / land / dash compress vertically.
-    const { sx, sy } = this.deformScale(f, tick);
+    const base = this.deformScale(f, tick);
+    let sx = base.sx;
+    let sy = base.sy;
+    // Hitlag squash — every hit briefly squashes the victim horizontally to
+    // sell weight. Lasts only while hitpause is active so the silhouette
+    // pops in the freeze frame and recovers as motion resumes.
+    if (f.isHitPaused(tick) && f.fsm.is('Hitstun')) {
+      sx *= 0.88;
+      sy *= 1.06;
+    }
 
     g.save();
     g.translateCanvas(Math.floor(x + jx), Math.floor(y + jy));

@@ -299,6 +299,18 @@ export class VFX {
     const cam = this.scene.cameras.main;
     const sw = cam.width / cam.zoom;
     const sh = cam.height / cam.zoom;
+    // Two-stage flash: a hard 70ms white snap (sells the moment of impact),
+    // then a longer-fade tinted overlay in the attacker's hue.
+    const snap = this.scene.add
+      .rectangle(cam.scrollX + sw / 2, cam.scrollY + sh / 2, sw * 1.4, sh * 1.4, 0xffffff, 0.9)
+      .setDepth(2502);
+    this.scene.tweens.add({
+      targets: snap,
+      alpha: 0,
+      duration: 110,
+      ease: 'Cubic.easeOut',
+      onComplete: () => snap.destroy()
+    });
     const overlay = this.scene.add
       .rectangle(cam.scrollX + sw / 2, cam.scrollY + sh / 2, sw * 1.4, sh * 1.4, color, 0.55)
       .setDepth(2500);
@@ -308,6 +320,31 @@ export class VFX {
       duration: 700,
       ease: 'Cubic.easeIn',
       onComplete: () => overlay.destroy()
+    });
+  }
+
+  /** Floating "+12" damage tick that rises from the victim and fades. */
+  damageTick(x: number, y: number, dmg: number): void {
+    const intensity = Math.min(1, dmg / 14);
+    const tint = dmg >= 13 ? '#ff5050' : dmg >= 8 ? '#ffc24d' : '#e6e8ed';
+    const tx = this.scene.add
+      .text(x, y - 30, `+${dmg.toFixed(0)}`, {
+        fontFamily: 'Cinzel, ui-serif, serif',
+        fontSize: `${20 + intensity * 12}px`,
+        fontStyle: 'bold',
+        color: tint,
+        stroke: '#000',
+        strokeThickness: 4
+      })
+      .setOrigin(0.5)
+      .setDepth(2300);
+    this.scene.tweens.add({
+      targets: tx,
+      y: y - 70 - intensity * 25,
+      alpha: 0,
+      duration: 750,
+      ease: 'Cubic.easeOut',
+      onComplete: () => tx.destroy()
     });
   }
 

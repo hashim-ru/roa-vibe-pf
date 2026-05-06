@@ -64,6 +64,14 @@ export class Fighter {
   sdiAccumY = 0;
   /** Engine refactor 1.8 — true tumble flight (knockback ≥ 80). */
   tumbling = false;
+  /** 0..100 — shield bubble health. Drains while shielding, breaks at 0. */
+  shieldHP = 100;
+  /** Index of the fighter currently grabbing this one, or -1. */
+  grabbedBy = -1;
+  /** Tick by which a grab attempt expires (grabber side). */
+  grabUntilTick = -1;
+  /** Tick by which the grab hold expires (victim side). */
+  grabbedUntilTick = -1;
 
   constructor(
     public readonly playerIndex: number,

@@ -26,6 +26,8 @@ import { HelplessState } from '../entities/states/special/HelplessState';
 import { LedgeHangState } from '../entities/states/special/LedgeHangState';
 import { KOState } from '../entities/states/special/KOState';
 import { DodgeRollState } from '../entities/states/special/DodgeRollState';
+import { ShieldState, ShieldBreakState } from '../entities/states/special/ShieldState';
+import { GrabState, GrabbingState, GrabbedState } from '../entities/states/special/GrabStates';
 import { Battlefield } from '../stages/Battlefield';
 import { FinalDestination } from '../stages/FinalDestination';
 import { HitboxDebugRenderer } from '../render/HitboxDebugRenderer';
@@ -36,10 +38,13 @@ import { BotController } from '../input/BotController';
 import { gameMode } from '../config/GameMode';
 import { isOutsideBlastZone } from '../physics/Collision';
 import { hitDetection } from '../combat/HitDetection';
+import { processFootstool } from '../tech/Footstool';
+import { processLedgeTrump } from '../tech/LedgeTrump';
 import { DynamicCamera } from '../camera/DynamicCamera';
 import { ScreenShake } from '../camera/ScreenShake';
 import { VFX } from '../render/VFX';
 import { HUD } from '../render/UI/HUD';
+import { MatchOverlay } from '../render/UI/MatchOverlay';
 import { audio, bindAudioEvents } from '../audio/AudioManager';
 import { netClient } from '../net/NetClient';
 import { NetSync } from '../net/NetSync';
@@ -70,6 +75,7 @@ export class MatchScene extends Phaser.Scene {
   private shake!: ScreenShake;
   private vfx!: VFX;
   private hud!: HUD;
+  private overlay!: MatchOverlay;
   private debugText!: Phaser.GameObjects.Text;
   private fpsLabel: HTMLElement | null = null;
   private gameOverText?: Phaser.GameObjects.Text;
@@ -147,6 +153,10 @@ export class MatchScene extends Phaser.Scene {
     const f1 = new Fighter(0, world, c1.stats, buf1, world.spawns[0], c1.moves);
     const f2 = new Fighter(1, world, c2.stats, buf2, world.spawns[1], c2.moves);
     this.fighters = [f1, f2];
+    // Expose the fighters list on the World so multi-fighter states
+    // (GrabStates, etc) can find the opponent without threading the
+    // list through every callsite.
+    (world as unknown as { fighters: Fighter[] }).fighters = this.fighters;
 
     this.bot = cfg.mode === 'vs-bot' ? new BotController(f2, f1, buf2, cfg.difficulty) : null;
 
@@ -169,7 +179,12 @@ export class MatchScene extends Phaser.Scene {
         new HelplessState(),
         new LedgeHangState(),
         new KOState(),
-        new DodgeRollState()
+        new DodgeRollState(),
+        new ShieldState(),
+        new ShieldBreakState(),
+        new GrabState(),
+        new GrabbingState(),
+        new GrabbedState()
       ]);
       f.fsm = fsm;
       fsm.start('Fall', 0);
@@ -186,6 +201,7 @@ export class MatchScene extends Phaser.Scene {
     this.shake = new ScreenShake(this);
     this.vfx = new VFX(this);
     this.hud = new HUD(this);
+    this.overlay = new MatchOverlay(this);
 
     // UI overlay camera that doesn't zoom — keeps HUD at fixed screen size.
     this.uiCamera = this.cameras.add(0, 0, GAME_WIDTH, GAME_HEIGHT);
@@ -293,11 +309,15 @@ export class MatchScene extends Phaser.Scene {
       // smaller text + no big dent. Heavy hits read as "wham" instantly.
       if (e.damage >= 5) this.vfx.dentLine(cx, cy, launchDeg, 18 + e.damage);
       this.vfx.voicePop(cx, cy, e.damage);
+      this.vfx.damageTick(cx, cy, e.damage);
       this.shake.add(result.trauma);
-      const intensity = Math.min(1, e.damage / 14);
-      const dx = Math.sign(v.body.x - a.body.x) * (3 + intensity * 9);
-      const dy = -1 - intensity * 3;
-      this.camera.kick(dx, dy);
+      // Camera punch scales with the actual knockback magnitude — a
+      // tippered fsmash should kick the camera much harder than a jab,
+      // even though both might do similar percent damage.
+      const kbMag = Math.hypot(v.body.vx, v.body.vy);
+      const punch = Math.sqrt(kbMag) * 1.2 + Math.min(1, e.damage / 14) * 4;
+      const dirX = Math.sign(v.body.x - a.body.x) || 1;
+      this.camera.kick(dirX * (3 + punch), -1 - punch * 0.55);
     });
 
     bus.on('parry', (e) => {
@@ -322,10 +342,13 @@ export class MatchScene extends Phaser.Scene {
       if (!v) return;
       this.vfx.koStar(v.body.x, v.body.y - v.body.h * 0.5);
       this.vfx.koFlash(0xffe04d);
-      this.shake.add(1);
-      this.camera.focus(v.body.x, v.body.y - 40, frameClock.tick + 64, 1.55);
-      this.koFreezeUntilTick = frameClock.tick + 28;
-      this.slowMoUntilTick = frameClock.tick + 64;
+      this.shake.add(1.2);
+      // Tighter freeze (~5f ≈ 83ms) lands the impact as a single SNAP
+      // instead of feeling laggy. Slow-mo runs longer so the trajectory
+      // out of the blast zone reads dramatically.
+      this.camera.focus(v.body.x, v.body.y - 40, frameClock.tick + 90, 1.7);
+      this.koFreezeUntilTick = frameClock.tick + 5;
+      this.slowMoUntilTick = frameClock.tick + 90;
     });
 
     bus.on('land', (e) => {
@@ -412,6 +435,11 @@ export class MatchScene extends Phaser.Scene {
         f.fsm.force('KO', tick);
       }
     }
+    // Multi-fighter tech passes that need awareness of all fighters at
+    // once — footstool jumps + ledge-trumps. Run before hitDetection so
+    // a footstool stomp doesn't get clobbered by an in-flight hitbox.
+    processFootstool(this.fighters);
+    processLedgeTrump(this.fighters, tick);
     hitDetection.run(this.fighters, tick);
 
     if (this.netSync && tick > 0 && tick % 60 === 0) {
@@ -455,6 +483,7 @@ export class MatchScene extends Phaser.Scene {
       this.debugRenderer.draw(this.fighters[0].world, [], frameClock.tick);
     }
     this.hud.draw(this.fighters, frameClock.tick);
+    this.overlay.draw(this.fighters[0].world, this.fighters, frameClock.tick, this.debugVisible);
 
     if (this.debugVisible) {
       const sw = this.scale.gameSize.width;

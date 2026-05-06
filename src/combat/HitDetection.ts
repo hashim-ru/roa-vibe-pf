@@ -120,10 +120,13 @@ export class HitDetection {
       fixedKB: data.fixedKB
     });
 
-    // Crouch cancel — if victim is in Crouch state and the hit would deliver
-    // sub-80 KB, scale launch by 0.85 (Melee canon: lets defenders eat
-    // weak hits without committing to recovery).
-    if (victim.fsm.is('Crouch') && kb < 80 && data.fixedKB === undefined) {
+    // Crouch cancel — Melee canon. On low-KB hits while crouching: scale
+    // the launch magnitude by 0.85 *and* compress the vertical component
+    // of the launch angle so the victim sticks to the ground rather than
+    // popping up. This kills vertical combo strings the way Melee
+    // ASDI-down + CC do; the defender just slides instead of being juggled.
+    const ccActive = victim.fsm.is('Crouch') && kb < 80 && data.fixedKB === undefined;
+    if (ccActive) {
       kb *= 0.85;
     }
 
@@ -131,7 +134,14 @@ export class HitDetection {
 
     const facing = (attacker.body.x <= victim.body.x ? 1 : -1) as 1 | -1;
     const stick = victim.input.current();
-    const angle = applyDI(data.angle === 361 ? (kb < 32 ? 0 : 44) : data.angle, stick.stickX, stick.stickY);
+    let angle = applyDI(data.angle === 361 ? (kb < 32 ? 0 : 44) : data.angle, stick.stickX, stick.stickY);
+    if (ccActive) {
+      // Cap absolute launch angle at 30° from horizontal while CC'd.
+      // Sign-preserving so left/right launches stay on the same side.
+      const cap = 30;
+      if (angle > cap) angle = cap;
+      else if (angle < -cap) angle = -cap;
+    }
     const lv = launchVector(kb, angle, facing);
 
     victim.body.vx = lv.vx;

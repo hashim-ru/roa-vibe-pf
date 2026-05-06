@@ -14,7 +14,14 @@ export class ParryState extends State<Fighter> {
 
   onUpdate(f: Fighter, tick: number): string | null {
     f.body.vx *= f.stats.groundFriction;
-    if (this.elapsed(tick) >= PARRY_TOTAL_FRAMES) return 'Idle';
+    const elapsed = this.elapsed(tick);
+    // After the active parry window closes, holding parry on the ground
+    // transitions into Shield — a hold-to-block stance with depletable
+    // HP. Releasing parry mid-shield drops back to Idle.
+    if (elapsed >= PARRY_ACTIVE_FRAMES && f.body.grounded && f.input.isHeld('parry')) {
+      return 'Shield';
+    }
+    if (elapsed >= PARRY_TOTAL_FRAMES) return 'Idle';
     return null;
   }
 
