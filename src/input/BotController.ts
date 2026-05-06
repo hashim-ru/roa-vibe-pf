@@ -2,6 +2,12 @@ import type { Fighter } from '../entities/Fighter';
 import { InputBuffer } from './InputBuffer';
 import { emptyInput, InputState } from './InputState';
 import type { Difficulty } from '../config/GameMode';
+import { sharedRng } from '../core/Rng';
+
+// Deterministic substitute for Math.random() so bot-driven matches stay
+// reproducible (replays, future net-bot training). Cosmetic randomness
+// elsewhere (VFX, audio jitter) still uses Math.random for variety.
+const rand = (): number => sharedRng.next();
 
 interface DifficultyProfile {
   reactionFrames: number; // input lag the bot adds to itself
@@ -150,7 +156,7 @@ export class BotController {
           fr.frame === tick - opp.pendingMove!.startedAtTick &&
           fr.hitboxes.length > 0
       );
-    if (oppActiveHb && dist < 90 && Math.random() < this.profile.parryChance) {
+    if (oppActiveHb && dist < 90 && rand() < this.profile.parryChance) {
       s.parry = this.justInputEdge(tick, 'parry');
       return s;
     }
@@ -160,7 +166,7 @@ export class BotController {
       !me.body.grounded &&
       me.body.vy > 2 &&
       !me.usedAirDodge &&
-      Math.random() < this.profile.airdodgeChance / 30
+      rand() < this.profile.airdodgeChance / 30
     ) {
       s.parry = this.justInputEdge(tick, 'parry');
       s.stickY = 1;
@@ -185,20 +191,20 @@ export class BotController {
 
     switch (this.currentTarget) {
       case 'approach': {
-        s.stickX = Math.sign(dx) * (Math.random() < this.profile.jitter ? 0 : 1);
+        s.stickX = Math.sign(dx) * (rand() < this.profile.jitter ? 0 : 1);
         // Jump if opponent is above
-        if (dy < -100 && me.body.grounded && Math.random() < 0.4) {
+        if (dy < -100 && me.body.grounded && rand() < 0.4) {
           s.jump = this.justInputEdge(tick, 'jump');
         }
         // Dash dance teaser at hard
-        if (this.profile.diSkill > 0.8 && Math.random() < 0.05) {
+        if (this.profile.diSkill > 0.8 && rand() < 0.05) {
           s.stickX = -Math.sign(dx);
         }
         break;
       }
       case 'attack': {
         s.stickX = Math.sign(dx) * 0.6;
-        if (Math.random() < this.profile.smashChance) s.smashMod = true;
+        if (rand() < this.profile.smashChance) s.smashMod = true;
         s.attack = this.justInputEdge(tick, 'attack');
         // Up-attack if target above
         if (dy < -40) s.stickY = -0.8;
@@ -221,13 +227,13 @@ export class BotController {
     void dy;
     const p = this.profile;
     if (dist < p.attackRange) {
-      this.currentTarget = Math.random() < p.attackChance ? 'attack' : 'idle';
+      this.currentTarget = rand() < p.attackChance ? 'attack' : 'idle';
     } else if (dist < p.approachThreshold * 4) {
       this.currentTarget = 'approach';
     } else {
       this.currentTarget = 'approach';
     }
-    if (Math.random() < p.jitter) this.currentTarget = 'idle';
+    if (rand() < p.jitter) this.currentTarget = 'idle';
   }
 
   private wouldFallOff(dir: number): boolean {
@@ -248,6 +254,6 @@ export class BotController {
   /** Output a rising edge for an action only on the first frame the bot
    *  decides to press it; otherwise hold-state is dictated by current input. */
   private justInputEdge(_tick: number, _action: keyof InputState): boolean {
-    return Math.random() < 0.7; // bot doesn't perfectly press once; close enough
+    return rand() < 0.7; // bot doesn't perfectly press once; close enough
   }
 }

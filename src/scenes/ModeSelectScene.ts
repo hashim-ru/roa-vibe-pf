@@ -7,13 +7,29 @@ interface Choice {
   mode: Mode;
   difficulty: Difficulty;
   hint: string;
+  /** If set, jump straight to this scene instead of CharacterSelect. */
+  scene?: string;
 }
 
 const CHOICES: Choice[] = [
   { label: 'VS Bot — Easy', mode: 'vs-bot', difficulty: 'easy', hint: 'slow reflex, sparse attacks' },
   { label: 'VS Bot — Medium', mode: 'vs-bot', difficulty: 'medium', hint: 'tracks position, occasional combo' },
   { label: 'VS Bot — Hard', mode: 'vs-bot', difficulty: 'hard', hint: 'frame-perfect punish, parries, edge-guard' },
-  { label: 'VS Human (P2 keyboard)', mode: 'vs-human', difficulty: 'medium', hint: 'local 2-player split keyboard' }
+  { label: 'VS Human (P2 keyboard)', mode: 'vs-human', difficulty: 'medium', hint: 'local 2-player split keyboard' },
+  {
+    label: 'VS Online — Host',
+    mode: 'vs-net',
+    difficulty: 'medium',
+    hint: 'open lobby — friend joins via Tailscale or LAN address',
+    scene: 'NetHost'
+  },
+  {
+    label: 'VS Online — Join',
+    mode: 'vs-net',
+    difficulty: 'medium',
+    hint: 'enter friend\'s ws:// address to connect',
+    scene: 'NetJoin'
+  }
 ];
 
 export class ModeSelectScene extends Phaser.Scene {
@@ -118,6 +134,6 @@ export class ModeSelectScene extends Phaser.Scene {
   private confirm(): void {
     const c = CHOICES[this.cursor];
     gameMode.set({ mode: c.mode, difficulty: c.difficulty });
-    this.scene.start('CharacterSelect');
+    this.scene.start(c.scene ?? 'CharacterSelect');
   }
 }

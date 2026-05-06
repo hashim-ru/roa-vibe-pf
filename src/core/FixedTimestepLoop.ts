@@ -11,7 +11,7 @@ export class FixedTimestepLoop {
   private lastTime = 0;
   private started = false;
 
-  constructor(private readonly step: (tickIndex: number) => void) {}
+  constructor(private readonly step: (tickIndex: number) => boolean | void) {}
 
   tick(now: number, currentTickIndex: () => number, advance: () => number): number {
     if (!this.started) {
@@ -25,7 +25,12 @@ export class FixedTimestepLoop {
 
     let steps = 0;
     while (this.accumulator >= FIXED_DT_MS && steps < MAX_STEPS_PER_FRAME) {
-      this.step(currentTickIndex());
+      // Step may return `false` to signal a stall (e.g. waiting on a
+      // remote input for this tick). In that case we keep the time in
+      // the accumulator and try again next frame — the tick does not
+      // advance, so peers stay aligned.
+      const result = this.step(currentTickIndex());
+      if (result === false) break;
       advance();
       this.accumulator -= FIXED_DT_MS;
       steps += 1;

@@ -41,6 +41,19 @@ import { ScreenShake } from '../camera/ScreenShake';
 import { VFX } from '../render/VFX';
 import { HUD } from '../render/UI/HUD';
 import { audio, bindAudioEvents } from '../audio/AudioManager';
+import { netClient } from '../net/NetClient';
+import { NetSync } from '../net/NetSync';
+import { sharedRng } from '../core/Rng';
+
+function mix(h: number, v: number): number {
+  h = (h ^ v) >>> 0;
+  return Math.imul(h, 0x01000193) >>> 0;
+}
+function hashString(s: string): number {
+  let h = 0x811c9dc5 | 0;
+  for (let i = 0; i < s.length; i++) h = (Math.imul(h ^ s.charCodeAt(i), 0x01000193) | 0);
+  return h >>> 0;
+}
 
 /**
  * MatchScene — tech-demo rebuild edition. Wires Lancer + Hooded
@@ -68,6 +81,11 @@ export class MatchScene extends Phaser.Scene {
   private koFreezeUntilTick = -1;
   private bot: BotController | null = null;
   private uiCamera!: Phaser.Cameras.Scene2D.Camera;
+  private netSync: NetSync | null = null;
+  private localKeyboard: KeyboardDevice | null = null;
+  private remoteBuf: InputBuffer | null = null;
+  private localBuf: InputBuffer | null = null;
+  private netStatusText?: Phaser.GameObjects.Text;
 
   constructor() {
     super({ key: 'Match' });
@@ -83,6 +101,7 @@ export class MatchScene extends Phaser.Scene {
     this.debugVisible = DEBUG.showHitboxes;
 
     const cfg = gameMode.get();
+    sharedRng.reseed(cfg.netSession?.seed ?? 1);
     const stageDef = cfg.stage === 'final-destination' ? FinalDestination : Battlefield;
     const world = stageDef.build();
     new StageRenderer(this, world, stageDef.theme);
@@ -100,6 +119,28 @@ export class MatchScene extends Phaser.Scene {
       devices.push(new KeyboardDevice(1, P2_KEYS));
     }
     this.inputReader = new InputReader(devices as KeyboardDevice[], new Map([[0, buf1], [1, buf2]]));
+
+    // Net mode: bypass the normal InputReader and drive the buffers
+    // ourselves inside `simulate()` from the NetSync delay queues. The
+    // local player always uses P1 keybinds (regardless of host/guest);
+    // the remote half is fed by tick-aligned input frames off the wire.
+    if (cfg.mode === 'vs-net' && cfg.netSession) {
+      const session = cfg.netSession;
+      this.localBuf = session.localPlayerIndex === 0 ? buf1 : buf2;
+      this.remoteBuf = session.localPlayerIndex === 0 ? buf2 : buf1;
+      this.localKeyboard = new KeyboardDevice(session.localPlayerIndex, P1_KEYS);
+      this.netSync = new NetSync(
+        netClient,
+        session.localPlayerIndex,
+        session.inputDelay,
+        session.startTick
+      );
+      this.netSync.onDesync = (tick, ours, theirs) => {
+        // eslint-disable-next-line no-console
+        console.warn(`[netcode] desync at tick ${tick}: ours=${ours} theirs=${theirs}`);
+      };
+      this.inputReader = new InputReader([], new Map());
+    }
 
     const c1 = ROSTER[cfg.characters[0]];
     const c2 = ROSTER[cfg.characters[1]];
@@ -166,6 +207,51 @@ export class MatchScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setDepth(2100)
       .setVisible(DEBUG.showStateText);
+
+    if (this.netSync) {
+      this.netStatusText = this.add
+        .text(GAME_WIDTH - 12, 12, 'connecting…', {
+          fontFamily: 'ui-monospace, monospace',
+          fontSize: '13px',
+          color: '#9bd3a6',
+          stroke: '#000',
+          strokeThickness: 3
+        })
+        .setOrigin(1, 0)
+        .setScrollFactor(0)
+        .setDepth(2200);
+      // Net status sits with the HUD camera so the main camera's zoom
+      // doesn't crop it. Push into the HUD object list, hide from main,
+      // and clear the auto-ignore bit the ADDED_TO_SCENE handler set on
+      // the UI camera (Phaser stores the per-camera ignore in a bitmask
+      // on the GameObject).
+      this.hud.objects.push(this.netStatusText);
+      this.cameras.main.ignore(this.netStatusText);
+      const filterHolder = this.netStatusText as unknown as { cameraFilter: number };
+      filterHolder.cameraFilter = (filterHolder.cameraFilter ?? 0) & ~this.uiCamera.id;
+
+      // Pause + flag the match if the peer disconnects mid-fight, and
+      // forward an explicit "bye" message back to title-screen UX.
+      const offNet = netClient.on((msg) => {
+        if (msg.t === 'bye') {
+          this.netStatusText?.setText(`opponent left: ${msg.reason}`);
+          this.netStatusText?.setColor('#ff9a8a');
+          this.matchOver = true;
+        }
+      });
+      const offStatus = netClient.onStatus((s) => {
+        if (s === 'closed' || s === 'error') {
+          this.netStatusText?.setText('disconnected — press ESC for title');
+          this.netStatusText?.setColor('#ff9a8a');
+          this.matchOver = true;
+        }
+      });
+      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+        offNet();
+        offStatus();
+        netClient.disconnect('match ended');
+      });
+    }
 
     this.fpsLabel = document.getElementById('fps');
     this.loop = new FixedTimestepLoop((tick) => this.simulate(tick));
@@ -288,15 +374,36 @@ export class MatchScene extends Phaser.Scene {
     frameClock.reset();
   }
 
-  private simulate(tick: number): void {
+  private simulate(tick: number): boolean | void {
     if (this.matchOver) return;
     if (tick < this.koFreezeUntilTick) return;
     if (tick < this.slowMoUntilTick) {
       this.skipNextSimulate = !this.skipNextSimulate;
       if (this.skipNextSimulate) return;
     }
-    this.inputReader.poll();
-    if (this.bot) this.bot.poll(tick);
+
+    if (this.netSync && this.localKeyboard && this.localBuf && this.remoteBuf) {
+      // Sample fresh local input *now* and queue it for execution
+      // `inputDelay` ticks in the future. Then look up the inputs that
+      // were scheduled to execute on this exact tick.
+      const localSample = this.localKeyboard.snapshot();
+      this.netSync.sample(tick, localSample);
+      const pair = this.netSync.inputsForTick(tick);
+      if (!pair) {
+        // Remote hasn't delivered this tick's input yet — stall.
+        if (this.netStatusText) this.netStatusText.setText(`syncing… ${netClient.ping.toFixed(0)}ms`);
+        return false;
+      }
+      this.localBuf.push(pair.local);
+      this.remoteBuf.push(pair.remote);
+      this.netSync.prune(tick - 60);
+      if (this.netStatusText)
+        this.netStatusText.setText(`net ${netClient.ping.toFixed(0)}ms · delay ${this.netSync.inputDelay}f`);
+    } else {
+      this.inputReader.poll();
+      if (this.bot) this.bot.poll(tick);
+    }
+
     for (const f of this.fighters) {
       f.update(tick);
       if (isOutsideBlastZone(f.body, f.world)) {
@@ -306,6 +413,28 @@ export class MatchScene extends Phaser.Scene {
       }
     }
     hitDetection.run(this.fighters, tick);
+
+    if (this.netSync && tick > 0 && tick % 60 === 0) {
+      this.netSync.reportHash(tick, this.computeStateHash());
+    }
+  }
+
+  private computeStateHash(): number {
+    // Cheap rolling hash over gameplay-affecting fields. Position +
+    // velocity + percent + FSM state + hitstun + facing. Enough to flag
+    // any meaningful divergence without serializing the whole world.
+    let h = 0x811c9dc5 | 0;
+    for (const f of this.fighters) {
+      h = mix(h, Math.round(f.body.x * 100));
+      h = mix(h, Math.round(f.body.y * 100));
+      h = mix(h, Math.round(f.body.vx * 100));
+      h = mix(h, Math.round(f.body.vy * 100));
+      h = mix(h, Math.round(f.percent * 10));
+      h = mix(h, f.facing);
+      h = mix(h, f.hitstunRemaining);
+      h = mix(h, hashString(f.fsm.id ?? ''));
+    }
+    return h >>> 0;
   }
 
   update(time: number): void {

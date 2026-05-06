@@ -8,15 +8,19 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "host": "tsx src/net/host.ts"
   },
   "dependencies": {
     "howler": "^2.2.4",
     "mitt": "^3.0.1",
-    "phaser": "^3.80.1"
+    "phaser": "^3.80.1",
+    "ws": "^8.20.0"
   },
   "devDependencies": {
     "@types/howler": "^2.2.11",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.21.0",
     "typescript": "^5.4.0",
     "vite": "^5.2.0",
     "vitest": "^1.6.0"

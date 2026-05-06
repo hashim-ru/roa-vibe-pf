@@ -7,6 +7,8 @@ import { CharacterSelectScene } from './scenes/CharacterSelectScene';
 import { StageSelectScene } from './scenes/StageSelectScene';
 import { MatchScene } from './scenes/MatchScene';
 import { PauseScene } from './scenes/PauseScene';
+import { NetHostScene } from './scenes/NetHostScene';
+import { NetJoinScene } from './scenes/NetJoinScene';
 
 new Phaser.Game({
   type: Phaser.WEBGL,
@@ -28,5 +30,5 @@ new Phaser.Game({
     autoCenter: Phaser.Scale.CENTER_BOTH
   },
   banner: false,
-  scene: [BootScene, TitleScene, ModeSelectScene, CharacterSelectScene, StageSelectScene, MatchScene, PauseScene]
+  scene: [BootScene, TitleScene, ModeSelectScene, CharacterSelectScene, StageSelectScene, MatchScene, PauseScene, NetHostScene, NetJoinScene]
 });

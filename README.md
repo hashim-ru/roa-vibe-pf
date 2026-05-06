@@ -82,6 +82,36 @@ npm run preview      # serves the build at port 4173
 npm test             # 44 tests covering engine, knockback, FSM, bot AI
 ```
 
+## Online Play (LAN / Tailscale)
+
+Delay-based netcode with a 5-frame input buffer. Designed for friend-vs-friend
+play over Tailscale (encrypted P2P mesh, free for personal use) or plain LAN.
+There is no matchmaking server — one player runs a tiny relay, the other
+connects with a `ws://` address.
+
+```bash
+npm run host         # starts relay on 0.0.0.0:8080, prints Tailscale + LAN IPs
+```
+
+**Host:**
+1. `npm run host` in a terminal — copy any of the `ws://…:8080` addresses it prints.
+2. In the game, choose **VS Online — Host** → press SPACE to connect to your own relay.
+3. Wait for "connected as host. waiting for partner…" — match starts the moment the guest joins.
+
+**Guest:**
+1. Choose **VS Online — Join**.
+2. Type the host's address (e.g. `100.64.1.5:8080` from `tailscale ip -4`) and press ENTER.
+3. The host's character + stage selection is sent automatically and the match starts.
+
+The match runs lockstep: each peer sends its input N frames in advance and the
+sim waits for both peers' inputs before stepping. A state hash is exchanged
+every 60 ticks; mismatches log `[netcode] desync at tick …` to the console.
+Ping is shown top-right during play. Either side closing the tab disconnects
+both — press ESC to return to title.
+
+**Latency budget:** 5 frames ≈ 83ms. Tailscale routes peer-to-peer through
+WireGuard with DERP relay fallback; ping is usually 10-40ms in-region.
+
 ## Architecture
 
 - **Engine kernels**: 60Hz fixed timestep, AABB physics, generic FSM,
@@ -96,6 +126,11 @@ npm test             # 44 tests covering engine, knockback, FSM, bot AI
   persisted to localStorage, tier-mapped hit playback with pitch
   jitter, procedural whoosh + ambient sine pad via Web Audio. See
   `src/audio/`.
+- **Netcode**: delay-based lockstep (5-frame input buffer) over a tiny
+  Node WebSocket relay (`npm run host`). Both peers exchange packed
+  input frames + a state hash every 60 ticks for desync detection;
+  the match's seeded PRNG keeps any randomized gameplay (currently the
+  bot AI) reproducible. See `src/net/`.
 
 ## License
 
